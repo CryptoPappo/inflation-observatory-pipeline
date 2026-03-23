@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 class BaseScraper(ABC):
 
     @abstractmethod
-    def get_products_urls(self) -> list[str]:
+    def _get_products_urls(self) -> list[str]:
         """Get latest products.xml urls from sitemap.xml"""
 
     @abstractmethod
