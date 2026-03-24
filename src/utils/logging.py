@@ -32,7 +32,7 @@ def get_logger(name: str) -> Logger:
         If the logger already has handlers, they are reused to avoid duplicate log
         entries when the function is called multiple times.
     """
-    log_path = "/root/inflation-observatory-pipeline/logs/etl.log"
+    log_path = "logs/etl.log"
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
 
     logger = logging.getLogger(name)

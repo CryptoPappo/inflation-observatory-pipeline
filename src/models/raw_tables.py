@@ -4,6 +4,7 @@ from sqlalchemy import (
         String,
         Text,
         DateTime,
+        JSON,
         ForeignKey
 )
 from sqlalchemy.orm import (
@@ -12,7 +13,6 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship
 )
-from sqlalchemy.dialects.postgresql import JSONB
 
 class Base(DeclarativeBase):
     pass
@@ -39,9 +39,10 @@ class RawProducts(Base):
 
     scrape_id: Mapped[int] = mapped_column(
             BigInteger,
-            ForeignKey("raw_pages.scrape_id")
+            ForeignKey("raw_pages.scrape_id"),
+            primary_key=True
     )
-    payload: Mapped[dict] = mapped_column(JSONB)
+    payload: Mapped[dict] = mapped_column(JSON)
 
     pages: Mapped[RawPages] = relationship(back_populates="raw_products")
 
