@@ -14,6 +14,8 @@ from src.models.raw_tables import (
         RawProducts
 )
 
+
+
 def test_tables_created():
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -23,3 +25,33 @@ def test_tables_created():
 
     assert "raw_pages" in tables
     assert "raw_products" in tables
+
+@responses.activate
+def test_coto_scrape():
+    scraper = CotoScraper()
+    
+    mock_sitemap_data = """<?xml version="1.0" encoding="UTF-8"?>
+    <urlset>
+        <url>
+            <loc>https://supermarket.com/productos/1</loc>
+        </url>
+        <url>
+            <loc>https://supermarket.com/productos/2</loc>
+        </url>
+        <url>
+            <loc>https://supermarket.com/marcas</loc>
+        </url>
+    </urlset>
+    """
+    responses.add(
+        responses.GET,
+        scraper.sitemap_url,
+        body=mock_sitemap_data,
+        status=200,
+        content_type="application/xml"
+    )
+
+
+
+
+
