@@ -2,9 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from sqlalchemy.dialects.postgresql import insert 
+from sqlalchemy.orm.session import sessionmaker
 
+from src.utils.logging import get_logger
 from src.scrapers.base import BaseScraper
 from src.utils.drivers import set_up
+from src.models.raw_tables import RawPages, RawProducts
+logger = get_logger("coto_scraper")
 
 class CotoScraper(BaseScraper):
     def __init__(self):
@@ -23,7 +28,7 @@ class CotoScraper(BaseScraper):
 
         return products_urls
 
-    def scrape(self):
+    def scrape(self, Session: sessionmaker):
         products_urls = self._get_products_urls()
         
         products = []
@@ -33,13 +38,28 @@ class CotoScraper(BaseScraper):
             soup = BeautifulSoup(response.text, "xml")
             products.extend([product.text for product in soup.find_all("loc")])
         
-        #Build raw tables to insert to
+        raw_htmls = []
         driver = set_up()
-        for product in products[:2]:
+        for product in products:
             driver.get(product)
             html = driver.page_source
+            raw_htmls.append(
+                    {
+                        "store": "coto",
+                        "url": product,
+                        "html": html,
+                        "time": datetime.utcnow()
+                    }
+            )
 
+        stmt = insert(RawPages).values(raw_htmls)
+        stmt = stmt.on_conflict_do_nothing(
+                index_elements=[RawPages.scrape_id]
+        )
+        with Session() as session:
+            result = sessionn.execute(stmt)
+            inserted = result.rowcount
+            session.commit()
+        
+        logger.info(f"Raw pages insert: attempted={len(raw_htmls)} inserted={inserted}")
 
-if __name__ == "__main__":
-    scraper = CotoScraper()
-    scraper.scrape()
