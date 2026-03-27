@@ -10,6 +10,8 @@ from src.scrapers.base import BaseScraper
 from src.models.raw_tables import RawPages, RawProducts
 logger = get_logger("coto_scraper")
 
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0', 'Accept': 'application/json, text/plain, */*', 'Accept-Language': 'en-US,en;q=0.9', 'Accept-Encoding': 'gzip, deflate, br, zstd', 'Content-Type': 'application/json', 'Connection': 'keep-alive', 'Referer': 'https://www.cotodigital.com.ar/sitios/cdigi/productos/-gaseosa-coca-cola-zero-2,25-lt/_/R-00180416-00180416-200', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-origin', 'DNT': '1', 'Sec-GPC': '1'}
+
 class CotoScraper(BaseScraper):
     @property
     def base_url(self) -> str:
