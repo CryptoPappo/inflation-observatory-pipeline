@@ -14,7 +14,6 @@ class CotoScraper(BaseScraper):
     def base_url(self) -> str:
         return "https://www.cotodigital.com.ar/sitios/cdigi/sitemap.xml"
 
-    @property
     def product_headers(self, product_url: str) -> str:
         return {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0",
@@ -39,7 +38,7 @@ class CotoScraper(BaseScraper):
         except requests.exceptions.RequestException as e:
             logger.exception("An error ocurred with coto sitemap call")
             raise
-        raw_respones.append(
+        raw_responses.append(
                 {
                     "store": "coto",
                     "url": self.base_url,
@@ -52,7 +51,7 @@ class CotoScraper(BaseScraper):
 
         soup = BeautifulSoup(response.text, "xml")
         urls = soup.find_all("loc")
-        products_urls = []
+        products_xml_urls = []
         for url in urls:
             if "producto" in url.text:
                 products_xml_urls.append(url.text)
@@ -65,7 +64,7 @@ class CotoScraper(BaseScraper):
             except requests.exceptions.RequestException as e:
                 logger.exception(f"An error ocurred with coto products.xml call: {products_url}")
             else:
-                raw_respones.append(
+                raw_responses.append(
                         {
                             "store": "coto",
                             "url": product_xml_url,
@@ -87,7 +86,7 @@ class CotoScraper(BaseScraper):
             except requests.exceptions.RequestException as e:
                 logger.exception(f"An error ocurred with coto product call: {product_url}")
             else:
-                raw_respones.append(
+                raw_responses.append(
                         {
                             "store": "coto",
                             "url": product_url,
@@ -100,7 +99,7 @@ class CotoScraper(BaseScraper):
         
         stmt = insert(RawResponses).values(raw_responses)
         stmt = stmt.on_conflict_do_nothing(
-                index_elements=[Raw_responses.scrape_id]
+                index_elements=[RawResponses.scrape_id]
         )
         with Session() as session:
             result = session.execute(stmt)

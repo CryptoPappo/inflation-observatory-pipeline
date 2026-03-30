@@ -14,7 +14,7 @@ class Base(DeclarativeBase):
     pass
 
 class RawResponses(Base):
-    __tablenam__ = "raw_responses"
+    __tablename__ = "raw_responses"
 
     scrape_id: Mapped[int] = mapped_column(primary_key=True)
     store: Mapped[str] = mapped_column(String(255))

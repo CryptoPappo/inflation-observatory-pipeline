@@ -10,11 +10,7 @@ parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(parent_dir)
 
 from src.scrapers.coto_scraper import CotoScraper
-from src.models.raw_tables import (
-        Base,
-        RawPages,
-        RawProducts
-)
+from src.models.raw_tables import Base, RawResponses
 
 def test_tables_created():
     engine = create_engine("sqlite:///:memory:")
@@ -23,23 +19,8 @@ def test_tables_created():
     inspector = inspect(engine)
     tables = inspector.get_table_names()
 
-    assert "raw_pages" in tables
-    assert "raw_products" in tables
-
-def make_mock_driver():
-    driver = MagicMock()
-    
-    html_by_url = {
-            "https://supermarket.com/productos/producto-1": "<html>producto 1</html>",
-            "https://supermarket.com/productos/producto-2": "<html>producto 2</html>"
-    }
-
-    def get_side_effect(url):
-        driver.page_source = html_by_url[url]
-
-    driver.get.side_effect = get_side_effect
-
-    return driver
+    assert len(tables) == 1
+    assert "raw_responses" in tables
 
 @responses.activate
 def test_coto_scrape():
@@ -83,17 +64,46 @@ def test_coto_scrape():
         status=200,
         content_type="application/xml"
     )
+    
+    mock_product_1 = """
+    {
+        'product_name': 'Leche',
+        'price': '$1000.0',
+        'unit': 'L',
+        'ENA': '000001',
+    }
+    """
+    responses.add(
+        responses.GET,
+        "https://supermarket.com/productos/producto-1?format=json",
+        body=mock_product_1,
+        status=200,
+        content_type="application/json"
+    )
+
+    mock_product_2 = """
+    {
+        'product_name': 'Gaseosa',
+        'price': '$4000.0',
+        'unit': 'L',
+        'ENA': '000002',
+    }
+    """
+    responses.add(
+        responses.GET,
+        "https://supermarket.com/productos/producto-2?format=json",
+        body=mock_product_2,
+        status=200,
+        content_type="application/json"
+    )
 
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
 
-    mock_driver = make_mock_driver()
     Session = sessionmaker(bind=engine)
-    scraper.scrape(Session, mock_driver)
+    scraper.scrape(Session)
     
     with Session() as session:
-        rows = session.scalars(select(RawPages)).all()
-        assert len(rows) == 2
-        product_1 = rows[0]
-        product_2 = rows[1]
-        assert product_1.html != product_2.html
+        rows = session.scalars(select(RawResponses)).all()
+        assert len(rows) == 4
+
