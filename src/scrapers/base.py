@@ -6,7 +6,12 @@ class BaseScraper(ABC):
     @property
     @abstractmethod
     def base_url(self) -> str:
-        """Base URL or entry point for the scraper."""
+        """Base URL or entry point for the scraper"""
+
+    @propery
+    @abstractmethod
+    def product_headers(self, product_url: str) -> str:
+        """Headers to get products raw json"""
 
     @abstractmethod
     def scrape(self, Session: sessionmaker) -> None:
