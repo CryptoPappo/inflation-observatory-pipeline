@@ -9,13 +9,5 @@ class BaseScraper(ABC):
         """Base URL or entry point for the scraper."""
 
     @abstractmethod
-    def _get_products_urls(self) -> list[str]:
-        """Get latest products.xml urls from sitemap.xml"""
-
-    @abstractmethod
-    def scrape(
-            self,
-            Session: sessionmaker,
-            driver: WebDriver
-    ) -> None:
+    def scrape(self, Session: sessionmaker) -> None:
         """Render pages and store raw HTML / responses"""
