@@ -108,3 +108,54 @@ def test_coto_scrape():
         rows = session.scalars(select(RawResponses)).all()
         assert len(rows) == 4
 
+def test_coto_parser():
+    mock_product_disc = """
+    {"contents":
+        [{"Main":
+            [{"record":
+                {"attributes":
+                    {"product.displayName": ["Leche Serenisima"],
+                     "sku.repositoryId": ["sku00231560"],
+                     "product.eanPrincipal": ["77283193095"],
+                     "parentCategory.displayName": ["Leches Enteras"],
+                     "sku.unit_of_measure": ["litres"],
+                     "product.dtoDescuentos": ["[{'precioDescuento': '$1000', 'textoDescuento': '50%'}]"],
+                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
+                    }
+                }
+            }]
+        }]
+    }
+    """               
+    
+    mock_product_no_disc = """
+    {"contents":
+        [{"Main":
+            [{"record":
+                {"attributes":
+                    {"product.displayName": ["Leche Serenisima"],
+                     "sku.repositoryId": ["sku00231560"],
+                     "product.eanPrincipal": ["77283193095"],
+                     "parentCategory.displayName": ["Leches Enteras"],
+                     "sku.unit_of_measure": ["litres"],
+                     "product.dtoDescuentos": ["[]"],
+                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
+                    }
+                }
+            }]
+        }]
+    }                                                            
+    """
+
+    parser = CotoScraper()
+    product_disc = parser.parse(mock_product_disc)
+    product_no_disc = parser.parse(mock_product_no_disc)
+
+    assert product_disc["discount_price"] == "$1000"
+    assert product_disc["discount"] == "50%"
+    assert product_no_disc["discount_price"] == ""
+    assert product_no_disc["discount"] == ""
+
+    assert product_disc["regular_price"] == 2000.0
+    assert product_disc["unit_price"] == 2500.0
+    assert product_disc["untaxed_price"] == 1750.0

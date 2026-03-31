@@ -1,5 +1,6 @@
 import requests
 import json
+import ast
 from datetime import datetime
 from bs4 import BeautifulSoup
 from sqlalchemy.dialects.postgresql import insert 
@@ -112,14 +113,14 @@ class CotoScraper(BaseScraper):
     def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)
         raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
-        raw_prices = json.loads(raw_attributes["sku.dtoPrice"][0])
+        raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])
         try:
-            raw_discounts = json.loads(raw_attributes["product.dtoDescuentos"][0])[0]
+            raw_discounts = ast.literal_eval(raw_attributes["product.dtoDescuentos"][0])[0]
         except IndexError:
             raw_discounts = {"precioDescuento": "", "textoDescuento": ""}
         
         return {
-                "name": raw_attributes["prodcut.displayName"][0],
+                "name": raw_attributes["product.displayName"][0],
                 "sku": raw_attributes["sku.repositoryId"][0],
                 "ean": raw_attributes["product.eanPrincipal"][0],
                 "category": raw_attributes["parentCategory.displayName"][0],
@@ -127,6 +128,6 @@ class CotoScraper(BaseScraper):
                 "discount_price": raw_discounts["precioDescuento"],
                 "regular_price": raw_prices["precioLista"],
                 "unit_price": raw_prices["precio"],
-                "untaxed_price": raw_prices["preciosSinImp"],
+                "untaxed_price": raw_prices["precioSinImp"],
                 "discount": raw_discounts["textoDescuento"]
         }
