@@ -109,7 +109,7 @@ class CotoScraper(BaseScraper):
         
         logger.info(f"Raw responses insert: attempted={len(raw_responses)} inserted={inserted}")
 
-    def parser(self, raw_data: str) -> dict:
+    def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)
         raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
         raw_prices = json.loads(raw_attributes["sku.dtoPrice"][0])
@@ -120,6 +120,7 @@ class CotoScraper(BaseScraper):
         
         return {
                 "name": raw_attributes["prodcut.displayName"][0],
+                "sku": raw_attributes["sku.repositoryId"][0],
                 "ean": raw_attributes["product.eanPrincipal"][0],
                 "category": raw_attributes["parentCategory.displayName"][0],
                 "unit": raw_attributes["sku.unit_of_measure"][0],

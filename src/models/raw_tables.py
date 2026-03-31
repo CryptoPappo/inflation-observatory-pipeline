@@ -37,8 +37,8 @@ class NormalizedResponses(Base):
     __tablename__ = "normalized_responses"
 
     scrape_id: Mapped[int] = mapped_column(
-            primary_key=True,
-            ForeignKey("raw_responses.scrape_id")
+            ForeignKey("raw_responses.scrape_id"),
+            primary_key=True
     )
     normalized_payload: Mapped[JSON] = mapped_column(JSON)
 

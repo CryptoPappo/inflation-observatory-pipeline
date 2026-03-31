@@ -15,3 +15,7 @@ class BaseScraper(ABC):
     @abstractmethod
     def scrape(self, Session: sessionmaker) -> None:
         """Render pages and store raw HTML / responses"""
+
+    @abstractmethod
+    def parse(self, raw_data: str) -> dict:
+        """Normalize raw jsons"""
