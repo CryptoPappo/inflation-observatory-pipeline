@@ -19,8 +19,9 @@ def test_tables_created():
     inspector = inspect(engine)
     tables = inspector.get_table_names()
 
-    assert len(tables) == 1
+    assert len(tables) == 2
     assert "raw_responses" in tables
+    assert "normalized_responses" in tables
 
 @responses.activate
 def test_coto_scrape():

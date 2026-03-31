@@ -1,4 +1,5 @@
 import requests
+import json
 from datetime import datetime
 from bs4 import BeautifulSoup
 from sqlalchemy.dialects.postgresql import insert 
@@ -6,7 +7,7 @@ from sqlalchemy.orm.session import sessionmaker
 
 from src.utils.logging import get_logger
 from src.scrapers.base import BaseScraper
-from src.models.raw_tables import RawResponses
+from src.models.raw_tables import RawResponses, NormalizedResponses
 logger = get_logger("coto_scraper")
 
 class CotoScraper(BaseScraper):
@@ -108,3 +109,23 @@ class CotoScraper(BaseScraper):
         
         logger.info(f"Raw responses insert: attempted={len(raw_responses)} inserted={inserted}")
 
+    def parser(self, raw_data: str) -> dict:
+        raw_json = json.loads(raw_data)
+        raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
+        raw_prices = json.loads(raw_attributes["sku.dtoPrice"][0])
+        try:
+            raw_discounts = json.loads(raw_attributes["product.dtoDescuentos"][0])[0]
+        except IndexError:
+            raw_discounts = {"precioDescuento": "", "textoDescuento": ""}
+        
+        return {
+                "name": raw_attributes["prodcut.displayName"][0],
+                "ean": raw_attributes["product.eanPrincipal"][0],
+                "category": raw_attributes["parentCategory.displayName"][0],
+                "unit": raw_attributes["sku.unit_of_measure"][0],
+                "discount_price": raw_discounts["precioDescuento"],
+                "regular_price": raw_prices["precioLista"],
+                "unit_price": raw_prices["precio"],
+                "untaxed_price": raw_prices["preciosSinImp"],
+                "discount": raw_discounts["textoDescuento"]
+        }
