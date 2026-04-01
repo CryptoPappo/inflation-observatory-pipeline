@@ -9,27 +9,24 @@ from sqlalchemy.orm.session import sessionmaker
 from src.utils.logging import get_logger
 from src.scrapers.base import BaseScraper
 from src.models.raw_tables import RawResponses
-logger = get_logger("coto_scraper")
+logger = get_logger("carrefour_scraper")
 
-class CotoScraper(BaseScraper):
+class CarrefourScraper(BaseScraper):
     @property
     def base_url(self) -> str:
-        return "https://www.cotodigital.com.ar/sitios/cdigi/sitemap.xml"
-
+        return "https://www.carrefour.com.ar/sitemap.xml"
+    
     def product_headers(self, product_url: str) -> str:
         return {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0",
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": "en-US,en;q=0.9",
+                "Accept": "*/*",
+                "Accep-Language": "en-US,en;q=0.9",
                 "Accept-Encoding": "gzip, deflate, br, zstd",
-                "Content-Type": "application/json",
-                "Connection": "keep-alive", 
                 "Referer": product_url,
                 "Sec-Fetch-Dest": "empty",
                 "Sec-Fetch-Mode": "cors",
                 "Sec-Fetch-Site": "same-origin",
-                "DNT": "1",
-                "Sec-GPC": "1"
+                "Connection": "keep-alive"
         }
 
     def scrape(self, Session: sessionmaker):
@@ -38,11 +35,11 @@ class CotoScraper(BaseScraper):
             response = requests.get(self.base_url, timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            logger.exception("An error ocurred with coto sitemap call")
+            logger.exception("An error ocurred with carrefour sitemap call")
             raise
         raw_responses.append(
                 {
-                    "store": "coto",
+                    "store": "carrefour",
                     "url": self.base_url,
                     "response_type": "xml",
                     "response_category": "sitemap",
@@ -55,7 +52,7 @@ class CotoScraper(BaseScraper):
         urls = soup.find_all("loc")
         products_xml_urls = []
         for url in urls:
-            if "producto" in url.text:
+            if "product" in url.text:
                 products_xml_urls.append(url.text)
 
         products_urls = []
@@ -64,11 +61,11 @@ class CotoScraper(BaseScraper):
                 response = requests.get(product_xml_url, timeout=10)
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                logger.exception(f"An error ocurred with coto products.xml call: {products_url}")
+                logger.exception(f"An error ocurred with carrefour products.xml call: {products_url}")
             else:
                 raw_responses.append(
                         {
-                            "store": "coto",
+                            "store": "carrefour",
                             "url": product_xml_url,
                             "response_type": "xml",
                             "response_category": "products",
@@ -78,20 +75,22 @@ class CotoScraper(BaseScraper):
                 )
                 soup = BeautifulSoup(response.text, "xml")
                 products_urls.extend([product.text for product in soup.find_all("loc")])
-
-        for product_url in products_urls:
+        
+        api_url = "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?fq=productId:"
+        products_ids = [product_url.split("/")[-2].split("-")[-1] for product_url in products_urls]
+        for product_id, product_url in zip(products_ids, products_urls):
             headers = self.product_headers(product_url)
-            product_url += "?format=json"
+            url = api_url + product_id
             try:
-                response = requests.get(product_url, headers=headers, timeout=10)
+                response = requests.get(url, headers=headers, timeout=10)
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                logger.exception(f"An error ocurred with coto product call: {product_url}")
+                logger.exception(f"An error ocurred with carrefour product call: {product_url}")
             else:
                 raw_responses.append(
                         {
-                            "store": "coto",
-                            "url": product_url,
+                            "store": "carrefour",
+                            "url": url,
                             "response_type": "json",
                             "response_category": "product",
                             "payload": response.text,
@@ -111,23 +110,12 @@ class CotoScraper(BaseScraper):
         logger.info(f"Raw responses insert: attempted={len(raw_responses)} inserted={inserted}")
 
     def parse(self, raw_data: str) -> dict:
-        raw_json = json.loads(raw_data)
-        raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
-        raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])
-        try:
-            raw_discounts = ast.literal_eval(raw_attributes["product.dtoDescuentos"][0])[0]
-        except IndexError:
-            raw_discounts = {"precioDescuento": "", "textoDescuento": ""}
-        
+        raw_json = json.loads(raw_data)[0]
+
         return {
-                "name": raw_attributes.get("product.displayName", [""])[0],
-                "sku": raw_attributes.get("sku.repositoryId", [""])[0],
-                "ean": raw_attributes.get("product.eanPrincipal", [""])[0],
-                "category": "/".join(raw_attributes.get("allAncestors.displayName", [""])),
-                "unit": raw_attributes.get("sku.unit_of_measure", [""])[0],
-                "discount_price": raw_discounts.get("precioDescuento", ""),
-                "regular_price": raw_prices.get("precioLista", 0),
-                "unit_price": raw_prices.get("precio", 0),
-                "untaxed_price": raw_prices.get("precioSinImp", 0),
-                "discount": raw_discounts.get("textoDescuento", "")
-        }
+                "name": raw_json.get("productName", ""),
+                "sku": raw_json.get("productId", ""),
+                "ean": raw_json.get("EAN", [""])[0],
+                "category": raw_json.get("categories", [""])[0],
+                "unit": raw_json.get("Gramaje leyenda de conversión", [""])[0],
+                "discount_price": ra
