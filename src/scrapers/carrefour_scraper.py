@@ -1,3 +1,4 @@
+import re
 import requests
 import json
 import ast
@@ -76,8 +77,30 @@ class CarrefourScraper(BaseScraper):
                 soup = BeautifulSoup(response.text, "xml")
                 products_urls.extend([product.text for product in soup.find_all("loc")])
         
+        products_ids = []
+        for product_url in products_urls.copy():
+            try:
+                response = requests.get(product_url, timeout=10)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                logger.exception(f"An error ocurred with carrefour product call: {product_url}")
+                products_urls.remove(product_url)
+            else:
+                source_code = response.text
+                product_id = re.search(r"\"productId\":\"[0-9]+\"", source_code)
+                products_ids.append(product_id.split("\"")[-2])
+                raw_responses.append(
+                        {
+                            "store": "carrefour",
+                            "url": product_url,
+                            "response_type": "html",
+                            "response_category": "product",
+                            "payload": source_code,
+                            "time": datetime.utcnow()
+                        }
+                )
+            
         api_url = "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?fq=productId:"
-        products_ids = [product_url.split("/")[-2].split("-")[-1] for product_url in products_urls]
         for product_id, product_url in zip(products_ids, products_urls):
             headers = self.product_headers(product_url)
             url = api_url + product_id
@@ -111,6 +134,10 @@ class CarrefourScraper(BaseScraper):
 
     def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)[0]
+        raw_prices = raw_json["items"][0]["sellers"][0]["commertialOffer"]
+        raw_discount = raw_prices.get("PromotionTeasers", [""])[0]
+        if raw_discount is not dict:
+            raw_discount = {"name": ""}
 
         return {
                 "name": raw_json.get("productName", ""),
@@ -118,4 +145,9 @@ class CarrefourScraper(BaseScraper):
                 "ean": raw_json.get("EAN", [""])[0],
                 "category": raw_json.get("categories", [""])[0],
                 "unit": raw_json.get("Gramaje leyenda de conversión", [""])[0],
-                "discount_price": ra
+                "discount_price": raw_prices.get("Price", 0),
+                "regular_price": raw_prices.get("ListPrice", 0),
+                "unit_price": raw_json.get("pricePerUnit", "0"),
+                "untaxed_price": 0,
+                "discount": raw_discount["name"]
+        }
