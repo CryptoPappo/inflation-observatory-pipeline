@@ -87,7 +87,7 @@ class CarrefourScraper(BaseScraper):
                 products_urls.remove(product_url)
             else:
                 source_code = response.text
-                product_id = re.search(r"\"productId\":\"[0-9]+\"", source_code)
+                product_id = re.search(r"\"productId\":\"[0-9]+\"", source_code).group(0)
                 products_ids.append(product_id.split("\"")[-2])
                 raw_responses.append(
                         {
@@ -135,9 +135,11 @@ class CarrefourScraper(BaseScraper):
     def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)[0]
         raw_prices = raw_json["items"][0]["sellers"][0]["commertialOffer"]
-        raw_discount = raw_prices.get("PromotionTeasers", [""])[0]
-        if raw_discount is not dict:
+        raw_discount = raw_prices.get("PromotionTeasers", [])
+        if len(raw_discount) == 0:
             raw_discount = {"name": ""}
+        else:
+            raw_discount = raw_discount[0]
 
         return {
                 "name": raw_json.get("productName", ""),

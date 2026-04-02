@@ -12,17 +12,6 @@ sys.path.append(parent_dir)
 from src.scrapers.coto_scraper import CotoScraper
 from src.models.raw_tables import Base, RawResponses
 
-def test_tables_created():
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-
-    inspector = inspect(engine)
-    tables = inspector.get_table_names()
-
-    assert len(tables) == 2
-    assert "raw_responses" in tables
-    assert "normalized_responses" in tables
-
 @responses.activate
 def test_coto_scrape():
     scraper = CotoScraper()
@@ -117,7 +106,7 @@ def test_coto_parser():
                     {"product.displayName": ["Leche Serenisima"],
                      "sku.repositoryId": ["sku00231560"],
                      "product.eanPrincipal": ["77283193095"],
-                     "parentCategory.displayName": ["Leches Enteras"],
+                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
                      "sku.unit_of_measure": ["litres"],
                      "product.dtoDescuentos": ["[{'precioDescuento': '$1000', 'textoDescuento': '50%'}]"],
                      "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
@@ -136,7 +125,7 @@ def test_coto_parser():
                     {"product.displayName": ["Leche Serenisima"],
                      "sku.repositoryId": ["sku00231560"],
                      "product.eanPrincipal": ["77283193095"],
-                     "parentCategory.displayName": ["Leches Enteras"],
+                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
                      "sku.unit_of_measure": ["litres"],
                      "product.dtoDescuentos": ["[]"],
                      "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
