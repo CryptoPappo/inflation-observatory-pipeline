@@ -32,6 +32,4 @@ def main():
         try:
             scraper.scrape(session)
         except Exception as e:
-            logger.exception(f"An error ocurred scraping store {store}")
-    
-    
+            logger.exception(f"An error ocurred scraping store {store}")    

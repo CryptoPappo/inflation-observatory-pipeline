@@ -12,6 +12,46 @@ sys.path.append(parent_dir)
 from src.scrapers.coto_scraper import CotoScraper
 from src.models.raw_tables import Base, RawResponses, NormalizedResponses
 
+def make_mock_product_json_discount():
+    return """
+    {"contents":
+        [{"Main":
+            [{"record":
+                {"attributes":
+                    {"product.displayName": ["Leche Serenisima"],
+                     "sku.repositoryId": ["sku00231560"],
+                     "product.eanPrincipal": ["77283193095"],
+                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
+                     "sku.unit_of_measure": ["litres"],
+                     "product.dtoDescuentos": ["[{'precioDescuento': '$1000', 'textoDescuento': '50%'}]"],
+                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
+                    }
+                }
+            }]
+        }]
+    }
+    """ 
+
+def make_mock_product_json_no_discount():
+    return """
+    {"contents":
+        [{"Main":
+            [{"record":
+                {"attributes":
+                    {"product.displayName": ["Leche Serenisima"],
+                     "sku.repositoryId": ["sku00231560"],
+                     "product.eanPrincipal": ["77283193095"],
+                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
+                     "sku.unit_of_measure": ["litres"],
+                     "product.dtoDescuentos": ["[]"],
+                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
+                    }
+                }
+            }]
+        }]
+    }                                                            
+    """
+
 @responses.activate
 def test_coto_scrape():
     scraper = CotoScraper()
@@ -55,54 +95,18 @@ def test_coto_scrape():
         content_type="application/xml"
     )
 
-    mock_product_disc = """
-    {"contents":
-        [{"Main":
-            [{"record":
-                {"attributes":
-                    {"product.displayName": ["Leche Serenisima"],
-                     "sku.repositoryId": ["sku00231560"],
-                     "product.eanPrincipal": ["77283193095"],
-                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
-                     "sku.unit_of_measure": ["litres"],
-                     "product.dtoDescuentos": ["[{'precioDescuento': '$1000', 'textoDescuento': '50%'}]"],
-                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
-                    }
-                }
-            }]
-        }]
-    }
-    """               
     responses.add(
         responses.GET,
         "https://supermarket.com/productos/producto-1?format=json",
-        body=mock_product_disc,
+        body=make_mock_product_json_discount(),
         status=200,
         content_type="application/json"
     )
     
-    mock_product_no_disc = """
-    {"contents":
-        [{"Main":
-            [{"record":
-                {"attributes":
-                    {"product.displayName": ["Leche Serenisima"],
-                     "sku.repositoryId": ["sku00231560"],
-                     "product.eanPrincipal": ["77283193095"],
-                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
-                     "sku.unit_of_measure": ["litres"],
-                     "product.dtoDescuentos": ["[]"],
-                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
-                    }
-                }
-            }]
-        }]
-    }                                                            
-    """
     responses.add(
         responses.GET,
         "https://supermarket.com/productos/producto-2?format=json",
-        body=mock_product_no_disc,
+        body=make_mock_product_json_no_discount(),
         status=200,
         content_type="application/json"
     )
@@ -130,47 +134,9 @@ def test_coto_scrape():
         assert raw_scrape_ids == normalized_scrape_ids
     
 def test_coto_parser():
-    mock_product_disc = """
-    {"contents":
-        [{"Main":
-            [{"record":
-                {"attributes":
-                    {"product.displayName": ["Leche Serenisima"],
-                     "sku.repositoryId": ["sku00231560"],
-                     "product.eanPrincipal": ["77283193095"],
-                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
-                     "sku.unit_of_measure": ["litres"],
-                     "product.dtoDescuentos": ["[{'precioDescuento': '$1000', 'textoDescuento': '50%'}]"],
-                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
-                    }
-                }
-            }]
-        }]
-    }
-    """               
-    
-    mock_product_no_disc = """
-    {"contents":
-        [{"Main":
-            [{"record":
-                {"attributes":
-                    {"product.displayName": ["Leche Serenisima"],
-                     "sku.repositoryId": ["sku00231560"],
-                     "product.eanPrincipal": ["77283193095"],
-                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
-                     "sku.unit_of_measure": ["litres"],
-                     "product.dtoDescuentos": ["[]"],
-                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
-                    }
-                }
-            }]
-        }]
-    }                                                            
-    """
-
     parser = CotoScraper()
-    product_disc = parser.parse(mock_product_disc)
-    product_no_disc = parser.parse(mock_product_no_disc)
+    product_disc = parser.parse(make_mock_product_json_discount())
+    product_no_disc = parser.parse(make_mock_product_json_no_discount())
 
     assert product_disc["discount_price"] == "$1000"
     assert product_disc["discount"] == "50%"
