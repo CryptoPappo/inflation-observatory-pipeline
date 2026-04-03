@@ -120,13 +120,17 @@ class CotoScraper(BaseScraper):
             
             normalized_responses = []
             for row in session.execute(stmt_select):
-                normalized_json = self.parse(row.payload)
-                normalized_responses.append(
-                        {
-                            "scrape_id": row.scrape_id,
-                            "normalized_payload": normalized_json
-                        }
-                )
+                try:
+                    normalized_json = self.parse(row.payload)
+                except Exception as e:
+                    logger.exception(f"Failed parsing row: {row.scrape_id}")
+                else:
+                    normalized_responses.append(
+                            {
+                                "scrape_id": row.scrape_id,
+                                "normalized_payload": normalized_json
+                            }
+                    )
 
             stmt_normalized = insert(NormalizedResponses).values(normalized_responses)
             stmt_normalized = stmt_normalized.on_conflict_do_nothing(
