@@ -10,8 +10,30 @@ parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(parent_dir)
 
 from src.scrapers.carrefour_scraper import CarrefourScraper
-from src.models.raw_tables import Base, RawResponses
+from src.models.raw_tables import Base, RawResponses, NormalizedResponses
 
+def make_mock_product_json_discount():
+    return """
+    [{"productName": "Leche",
+      "productId": "12345",
+       "EAN": ["7778794676"],
+       "categories": ["Lacteos/Leches"],
+       "Gramaje leyenda de conversión": ["Litre"],
+       "pricePerUnit": "1000",
+       "items": [{"sellers": [{"commertialOffer": {"Price": 500, "ListPrice": 1000, "PromotionTeasers": [{"name": "50%Dto"}]}}]}]
+    }]
+    """               
+def make_mock_product_json_no_discount():
+    return """
+    [{"productName": "Leche",
+      "productId": "12345",
+       "EAN": ["7778794676"],
+       "categories": ["Lacteos/Leches"],
+       "Gramaje leyenda de conversión": ["Litre"],
+       "pricePerUnit": "1000",
+       "items": [{"sellers": [{"commertialOffer":{"Price": 1000, "ListPrice": 1000, "PromotionTeasers": []}}]}]
+    }]                                                          
+    """
 @responses.activate
 def test_carrefour_scrape():
     scraper = CarrefourScraper()
@@ -100,34 +122,18 @@ def test_carrefour_scrape():
         body=requests.exceptions.HTTPError("HTTPError")
     )
 
-    mock_product_1 = """
-    {
-        'product_name': 'Leche',
-        'price': '$1000.0',
-        'unit': 'L',
-        'ENA': '000001',
-    }
-    """
     responses.add(
         responses.GET,
         "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?fq=productId:12345",
-        body=mock_product_1,
+        body=make_mock_product_json_discount(),
         status=200,
         content_type="application/json"
     )
 
-    mock_product_2 = """
-    {
-        'product_name': 'Gaseosa',
-        'price': '$4000.0',
-        'unit': 'L',
-        'ENA': '000002',
-    }
-    """
     responses.add(
         responses.GET,
         "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?fq=productId:678910",
-        body=mock_product_2,
+        body=make_mock_product_json_no_discount(),
         status=200,
         content_type="application/json"
     )
@@ -139,34 +145,25 @@ def test_carrefour_scrape():
     scraper.scrape(Session)
     
     with Session() as session:
-        rows = session.scalars(select(RawResponses)).all()
-        assert len(rows) == 6
+        rows_raw = session.execute(select(RawResponses)).all()
+        rows_normalized = session.execute(select(NormalizedResponses)).all()
+        assert len(rows_raw) == 6
+        assert len(rows_normalized) == 2
+       
+        rows_raw_json = session.execute(
+                select(RawResponses)
+                .where(RawResponses.response_type == "json")
+                .where(RawResponses.response_category == "product")
+        ).all()
+
+        raw_scrape_ids = {row[0].scrape_id for row in rows_raw_json}
+        normalized_scrape_ids = {row[0].scrape_id for row in rows_normalized}
+        assert raw_scrape_ids == normalized_scrape_ids
 
 def test_carrefour_parser():
-    mock_product_disc = """
-    [{"productName": "Leche",
-      "productId": "12345",
-       "EAN": ["7778794676"],
-       "categories": ["Lacteos/Leches"],
-       "Gramaje leyenda de conversión": ["Litre"],
-       "pricePerUnit": "1000",
-       "items": [{"sellers": [{"commertialOffer": {"Price": 500, "ListPrice": 1000, "PromotionTeasers": [{"name": "50%Dto"}]}}]}]
-    }]
-    """               
-    mock_product_no_disc = """
-    [{"productName": "Leche",
-      "productId": "12345",
-       "EAN": ["7778794676"],
-       "categories": ["Lacteos/Leches"],
-       "Gramaje leyenda de conversión": ["Litre"],
-       "pricePerUnit": "1000",
-       "items": [{"sellers": [{"commertialOffer":{"Price": 1000, "ListPrice": 1000, "PromotionTeasers": []}}]}]
-    }]                                                          
-    """
-
     parser = CarrefourScraper()
-    product_disc = parser.parse(mock_product_disc)
-    product_no_disc = parser.parse(mock_product_no_disc)
+    product_disc = parser.parse(make_mock_product_json_discount())
+    product_no_disc = parser.parse(make_mock_product_json_no_discount())
 
     assert product_disc["discount_price"] == 500
     assert product_disc["discount"] == "50%Dto"

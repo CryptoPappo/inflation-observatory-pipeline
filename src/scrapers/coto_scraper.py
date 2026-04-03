@@ -115,6 +115,7 @@ class CotoScraper(BaseScraper):
             
             stmt_select = select(RawResponses.scrape_id, RawResponses.payload)\
                     .where(RawResponses.time >= t0)\
+                    .where(RawResponses.store == "coto")\
                     .where(RawResponses.response_type == "json")\
                     .where(RawResponses.response_category == "product")
             
@@ -142,7 +143,6 @@ class CotoScraper(BaseScraper):
             session.commit()
             
             logger.info(f"Normalized responses insert: attempted={len(normalized_responses)} inserted={inserted_normalized}")
-
 
     def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)
