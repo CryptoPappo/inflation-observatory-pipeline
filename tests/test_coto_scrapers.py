@@ -10,7 +10,7 @@ parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
 sys.path.append(parent_dir)
 
 from src.scrapers.coto_scraper import CotoScraper
-from src.models.raw_tables import Base, RawResponses
+from src.models.raw_tables import Base, RawResponses, NormalizedResponses
 
 @responses.activate
 def test_coto_scrape():
@@ -54,35 +54,55 @@ def test_coto_scrape():
         status=200,
         content_type="application/xml"
     )
-    
-    mock_product_1 = """
-    {
-        'product_name': 'Leche',
-        'price': '$1000.0',
-        'unit': 'L',
-        'ENA': '000001',
+
+    mock_product_disc = """
+    {"contents":
+        [{"Main":
+            [{"record":
+                {"attributes":
+                    {"product.displayName": ["Leche Serenisima"],
+                     "sku.repositoryId": ["sku00231560"],
+                     "product.eanPrincipal": ["77283193095"],
+                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
+                     "sku.unit_of_measure": ["litres"],
+                     "product.dtoDescuentos": ["[{'precioDescuento': '$1000', 'textoDescuento': '50%'}]"],
+                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
+                    }
+                }
+            }]
+        }]
     }
-    """
+    """               
     responses.add(
         responses.GET,
         "https://supermarket.com/productos/producto-1?format=json",
-        body=mock_product_1,
+        body=mock_product_disc,
         status=200,
         content_type="application/json"
     )
-
-    mock_product_2 = """
-    {
-        'product_name': 'Gaseosa',
-        'price': '$4000.0',
-        'unit': 'L',
-        'ENA': '000002',
-    }
+    
+    mock_product_no_disc = """
+    {"contents":
+        [{"Main":
+            [{"record":
+                {"attributes":
+                    {"product.displayName": ["Leche Serenisima"],
+                     "sku.repositoryId": ["sku00231560"],
+                     "product.eanPrincipal": ["77283193095"],
+                     "allAncestors.displayName": ["Lacteos", "Leches Enteras"],
+                     "sku.unit_of_measure": ["litres"],
+                     "product.dtoDescuentos": ["[]"],
+                     "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
+                    }
+                }
+            }]
+        }]
+    }                                                            
     """
     responses.add(
         responses.GET,
         "https://supermarket.com/productos/producto-2?format=json",
-        body=mock_product_2,
+        body=mock_product_no_disc,
         status=200,
         content_type="application/json"
     )
@@ -94,9 +114,21 @@ def test_coto_scrape():
     scraper.scrape(Session)
     
     with Session() as session:
-        rows = session.scalars(select(RawResponses)).all()
-        assert len(rows) == 4
+        rows_raw = session.execute(select(RawResponses)).all()
+        rows_normalized = session.execute(select(NormalizedResponses)).all()
+        assert len(rows_raw) == 4
+        assert len(rows_normalized) == 2
+       
+        rows_raw_json = session.execute(
+                select(RawResponses)
+                .where(RawResponses.response_type == "json")
+                .where(RawResponses.response_category == "product")
+        ).all()
 
+        raw_scrape_ids = {row[0].scrape_id for row in rows_raw_json}
+        normalized_scrape_ids = {row[0].scrape_id for row in rows_normalized}
+        assert raw_scrape_ids == normalized_scrape_ids
+    
 def test_coto_parser():
     mock_product_disc = """
     {"contents":

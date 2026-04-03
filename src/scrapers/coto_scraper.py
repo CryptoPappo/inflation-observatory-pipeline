@@ -3,12 +3,13 @@ import json
 import ast
 from datetime import datetime
 from bs4 import BeautifulSoup
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert 
 from sqlalchemy.orm.session import sessionmaker
 
 from src.utils.logging import get_logger
 from src.scrapers.base import BaseScraper
-from src.models.raw_tables import RawResponses
+from src.models.raw_tables import RawResponses, NormalizedResponses
 logger = get_logger("coto_scraper")
 
 class CotoScraper(BaseScraper):
@@ -33,6 +34,7 @@ class CotoScraper(BaseScraper):
         }
 
     def scrape(self, Session: sessionmaker):
+        t0 = datetime.utcnow()
         raw_responses = []
         try:
             response = requests.get(self.base_url, timeout=10)
@@ -99,16 +101,44 @@ class CotoScraper(BaseScraper):
                         }
                 )
         
-        stmt = insert(RawResponses).values(raw_responses)
-        stmt = stmt.on_conflict_do_nothing(
-                index_elements=[RawResponses.scrape_id]
-        )
         with Session() as session:
-            result = session.execute(stmt)
-            inserted = result.rowcount
+            stmt_raw = insert(RawResponses).values(raw_responses)
+            stmt_raw = stmt_raw.on_conflict_do_nothing(
+                    index_elements=[RawResponses.scrape_id]
+            )
+            result_raw = session.execute(stmt_raw)
+            inserted_raw = result_raw.rowcount
+
             session.commit()
-        
-        logger.info(f"Raw responses insert: attempted={len(raw_responses)} inserted={inserted}")
+
+            logger.info(f"Raw responses insert: attempted={len(raw_responses)} inserted={inserted_raw}")
+            
+            stmt_select = select(RawResponses.scrape_id, RawResponses.payload)\
+                    .where(RawResponses.time >= t0)\
+                    .where(RawResponses.response_type == "json")\
+                    .where(RawResponses.response_category == "product")
+            
+            normalized_responses = []
+            for row in session.execute(stmt_select):
+                normalized_json = self.parse(row.payload)
+                normalized_responses.append(
+                        {
+                            "scrape_id": row.scrape_id,
+                            "normalized_payload": normalized_json
+                        }
+                )
+
+            stmt_normalized = insert(NormalizedResponses).values(normalized_responses)
+            stmt_normalized = stmt_normalized.on_conflict_do_nothing(
+                    index_elements=[NormalizedResponses.scrape_id]
+            )
+            result_normalized = session.execute(stmt_normalized)
+            inserted_normalized = result_normalized.rowcount
+
+            session.commit()
+            
+            logger.info(f"Normalized responses insert: attempted={len(normalized_responses)} inserted={inserted_normalized}")
+
 
     def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)
