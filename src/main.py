@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from src.models.raw_tables import Base
 from src.scrapers.coto_scraper import CotoScraper
 from src.scrapers.carrefour_scraper import CarrefourScraper
 from src.utils.logging import get_logger
@@ -24,6 +25,8 @@ def main():
     engine = create_engine(db_url)
     session = sessionmaker(bind=engine)
 
+    Base.metadata.create_all(engine)
+
     scrapers_by_store = {
             "coto": CotoScraper(),
             "carrefour": CarrefourScraper()
@@ -32,4 +35,4 @@ def main():
         try:
             scraper.scrape(session)
         except Exception as e:
-            logger.exception(f"An error ocurred scraping store {store}")    
+            logger.exception(f"An error ocurred scraping store {store}") 
