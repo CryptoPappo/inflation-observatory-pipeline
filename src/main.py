@@ -31,7 +31,7 @@ def main():
             "coto": CotoScraper(),
             "carrefour": CarrefourScraper()
     }
-    for store, scraper in scrapers_by_store:
+    for store, scraper in scrapers_by_store.items():
         try:
             scraper.scrape(session)
         except Exception as e:
