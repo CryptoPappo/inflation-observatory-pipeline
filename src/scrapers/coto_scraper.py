@@ -1,4 +1,4 @@
-import requests
+import tenacity
 import json
 import ast
 from datetime import datetime
@@ -6,8 +6,10 @@ from bs4 import BeautifulSoup
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert 
 from sqlalchemy.orm.session import sessionmaker
+from requests_ratelimiter import LimiterSession
 
 from src.utils.logging import get_logger
+from src.utils.tools import safe_get
 from src.scrapers.base import BaseScraper
 from src.models.raw_tables import RawResponses, NormalizedResponses
 logger = get_logger("coto_scraper")
@@ -35,11 +37,19 @@ class CotoScraper(BaseScraper):
 
     def scrape(self, Session: sessionmaker):
         t0 = datetime.utcnow()
+        session = LimiterSession(
+            per_second=1,
+            per_minute=60
+        )
+
         raw_responses = []
         try:
-            response = requests.get(self.base_url, timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
+            response = safe_get(
+                    session,
+                    self.base_url,
+                    timeout=10
+            )
+        except tenacity.RetryError as e:
             logger.exception("An error ocurred with coto sitemap call")
             raise
         raw_responses.append(
@@ -63,9 +73,12 @@ class CotoScraper(BaseScraper):
         products_urls = []
         for product_xml_url in products_xml_urls:
             try:
-                response = requests.get(product_xml_url, timeout=10)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
+                response = safe_get(
+                        session,
+                        product_xml_url,
+                        timeout=10
+                )
+            except tenacity.RetryError as e:
                 logger.exception(f"An error ocurred with coto products.xml call: {products_url}")
             else:
                 raw_responses.append(
@@ -85,9 +98,13 @@ class CotoScraper(BaseScraper):
             headers = self.product_headers(product_url)
             product_url += "?format=json"
             try:
-                response = requests.get(product_url, headers=headers, timeout=10)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
+                response = safe_get(
+                        session,
+                        product_url,
+                        headers=headers,
+                        timeout=10
+                )
+            except tenacity.RetryError as e:
                 logger.exception(f"An error ocurred with coto product call: {product_url}")
             else:
                 raw_responses.append(
