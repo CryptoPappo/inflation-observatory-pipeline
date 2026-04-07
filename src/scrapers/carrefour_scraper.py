@@ -50,6 +50,7 @@ class CarrefourScraper(BaseScraper):
         except tenacity.RetryError as e:
             logger.exception("An error ocurred with carrefour sitemap call")
             raise
+        logger.info("Finished downloading carrefour sitemap xml")
         raw_responses.append(
                 {
                     "store": "carrefour",
@@ -79,6 +80,7 @@ class CarrefourScraper(BaseScraper):
             except tenacity.RetryError as e:
                 logger.exception(f"An error ocurred with carrefour products.xml call: {products_url}")
             else:
+                logger.info("Finished downloading carrefour products xml")
                 raw_responses.append(
                         {
                             "store": "carrefour",
@@ -104,6 +106,7 @@ class CarrefourScraper(BaseScraper):
                 logger.exception(f"An error ocurred with carrefour product call: {product_url}")
                 products_urls.remove(product_url)
             else:
+                logger.info(f"Downloaded carrefour source code of product: {product_url}")
                 source_code = response.text
                 product_id = re.search(r"\"productId\":\"[0-9]+\"", source_code).group(0)
                 products_ids.append(product_id.split("\"")[-2])
@@ -132,6 +135,7 @@ class CarrefourScraper(BaseScraper):
             except tenacity.RetryError as e:
                 logger.exception(f"An error ocurred with carrefour product call: {product_url}")
             else:
+                logger.info(f"Downloaded carrefour product json: {url}")
                 raw_responses.append(
                         {
                             "store": "carrefour",

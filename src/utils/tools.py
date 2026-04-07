@@ -1,5 +1,11 @@
 from requests import Session, Response
-from tenacity import retry, wait_exponential, stop_after_attempt
+from requests.exceptions import HTTPError
+from tenacity import (
+        retry,
+        retry_if_not_exception_type,
+        wait_exponential,
+        stop_after_attempt
+)
 
 from src.utils.logging import get_logger
 logger = get_logger("tools")
@@ -11,6 +17,7 @@ def log_after_retry(retry_state):
     )
 
 @retry(
+    retry=retry_if_not_exception_type(HTTPError),
     wait=wait_exponential(min=1, max=60),
     stop=stop_after_attempt(5),
     after=log_after_retry
