@@ -49,7 +49,7 @@ class CotoScraper(BaseScraper):
                     self.base_url,
                     timeout=10
             )
-        except tenacity.RetryError as e:
+        except Exception as e:
             logger.exception("An error ocurred with coto sitemap call")
             raise
         logger.info("Finished downloading coto sitemap xml")
@@ -79,7 +79,7 @@ class CotoScraper(BaseScraper):
                         product_xml_url,
                         timeout=10
                 )
-            except tenacity.RetryError as e:
+            except Exception as e:
                 logger.exception(f"An error ocurred with coto products.xml call: {products_url}")
             else:
                 logger.info("Finished downloading coto products xml")
@@ -106,7 +106,7 @@ class CotoScraper(BaseScraper):
                         headers=headers,
                         timeout=10
                 )
-            except tenacity.RetryError as e:
+            except Exception as e:
                 logger.exception(f"An error ocurred with coto product call: {product_url}")
             else:
                 logger.info(f"Donwloaded coto product: {product_url}")
