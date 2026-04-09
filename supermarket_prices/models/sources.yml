@@ -1,0 +1,64 @@
+version: 1
+
+sources:
+  - name: raw
+    database: inflation_db
+    tables:
+      - name: raw_responses
+        description: Raw API responses scraped from supermarket websites
+        columns:
+          - name: scrape_id
+            description: Primary key of raw_responses table
+            data_tests:
+              - unique
+              - not_null
+          - name: store
+            description: Name of supermarket scraped
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ['coto', 'carrefour']
+          - name: url
+            description: Address of web page scraped
+            data_tests:
+              - not_null
+          - name: response_type
+            description: Data format stored as a payload
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ['html', 'json', 'xml']
+          - name: response_category
+            description: Type of information scraped
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ['sitemap', 'products', 'product']
+          - name: payload
+            description: Data scraped stored raw as a Text
+            data_tests:
+              - not_null
+          - name: time
+            description: UTC date of the scraping
+            data_tests:
+              - not_null
+
+      - name: normalized_responses
+        description: Normalization of raw_responses payloads stored as a json
+        columns:
+          - name: scrape_id
+            description: Primary key of normalized_responses table
+            data_tests:
+              - unique
+              - not_null
+              - relationships:
+                  arguments:
+                    to: ref('raw_responses')
+                    field: scrape_id
+          - name: normalized_payload
+            description: Normalization of raw_responses payload stored as a JSON
+            data_tests:
+              - not_null
+
+
+
