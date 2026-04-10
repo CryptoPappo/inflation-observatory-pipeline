@@ -20,8 +20,8 @@ products as (
 
 		----------  strings
 		payload ->> 'name' as product_name,
-		payload ->> 'category' as product_category,
-		payload ->> 'discount' as product_discount,
+		payload ->> 'category' as category_path,
+		payload ->> 'discount' as discount_type,
 
 		----------  numerics
 		(payload ->> 'regular_price')::numeric as regular_price,
