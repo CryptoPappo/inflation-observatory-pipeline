@@ -102,7 +102,7 @@ step7 as (
 
 	select
 		step6.*,
-		make_date(y, 03, 22) + o as easter_date
+		make_date(year_number, 03, 22) + (d + e - o) as easter_date
 
 	from step6
 )
