@@ -172,6 +172,8 @@ full_holidays as (
 			when month_day = '12-25' then 'Navidad'
 			else null
 		end as holiday_name
+
+	from step7
 )
 
 select * from full_holidays
