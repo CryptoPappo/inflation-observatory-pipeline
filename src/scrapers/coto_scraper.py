@@ -166,8 +166,21 @@ class CotoScraper(BaseScraper):
 
     def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)
+        
         raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
+        
+        raw_categories = raw_json["contents"][0]["Main"][0]["breadcrumbsConstructor"]
+        try:
+            category = raw_categories[1]["label"]
+        except IndexError or KeyError:
+            category = ""
+        try:
+            subcategory = raw_categories[-1]["label"]
+        except IndexError or KeyError:
+            subcategory = ""
+
         raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])
+        
         try:
             raw_discounts = ast.literal_eval(raw_attributes["product.dtoDescuentos"][0])[0]
         except IndexError:
@@ -177,7 +190,8 @@ class CotoScraper(BaseScraper):
                 "name": raw_attributes.get("product.displayName", [""])[0],
                 "sku": raw_attributes.get("sku.repositoryId", [""])[0],
                 "ean": raw_attributes.get("product.eanPrincipal", [""])[0],
-                "category": "/".join(raw_attributes.get("allAncestors.displayName", [""])),
+                "category": category,
+                "subcategory": subcategory,
                 "unit": raw_attributes.get("sku.unit_of_measure", [""])[0],
                 "discount_price": raw_discounts.get("precioDescuento", "0"),
                 "regular_price": raw_prices.get("precioLista", 0),

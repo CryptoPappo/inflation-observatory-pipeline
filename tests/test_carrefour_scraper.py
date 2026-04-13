@@ -17,7 +17,7 @@ def make_mock_product_json_discount():
     [{"productName": "Leche",
       "productId": "12345",
        "EAN": ["7778794676"],
-       "categories": ["Lacteos/Leches"],
+       "categories": ["/Almacen/Leche/"],
        "Gramaje leyenda de conversión": ["Litre"],
        "pricePerUnit": "1000",
        "items": [{"sellers": [{"commertialOffer": {"Price": 500, "ListPrice": 1000, "PromotionTeasers": [{"name": "50%Dto"}]}}]}]
@@ -28,7 +28,7 @@ def make_mock_product_json_no_discount():
     [{"productName": "Leche",
       "productId": "12345",
        "EAN": ["7778794676"],
-       "categories": ["Lacteos/Leches"],
+       "categories": ["/Almacen/Leche/"],
        "Gramaje leyenda de conversión": ["Litre"],
        "pricePerUnit": "1000",
        "items": [{"sellers": [{"commertialOffer":{"Price": 1000, "ListPrice": 1000, "PromotionTeasers": []}}]}]

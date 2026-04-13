@@ -192,18 +192,31 @@ class CarrefourScraper(BaseScraper):
 
     def parse(self, raw_data: str) -> dict:
         raw_json = json.loads(raw_data)[0]
+        
         raw_prices = raw_json["items"][0]["sellers"][0]["commertialOffer"]
+        
         raw_discount = raw_prices.get("PromotionTeasers", [])
         if len(raw_discount) == 0:
             raw_discount = {"name": ""}
         else:
             raw_discount = raw_discount[0]
+        
+        raw_categories = raw_json.get("categories", ["//"])[0].split("/")
+        try:
+            category = raw_categories[1]
+        except IndexError:
+            category = ""
+        try:
+            subcategory = raw_categories[-2]
+        except IndexError:
+            subcategory = ""
 
         return {
                 "name": raw_json.get("productName", ""),
                 "sku": raw_json.get("productId", ""),
                 "ean": raw_json.get("EAN", [""])[0],
-                "category": raw_json.get("categories", [""])[0],
+                "category": category,
+                "subcategory": subcategory,
                 "unit": raw_json.get("Gramaje leyenda de conversión", [""])[0],
                 "discount_price": raw_prices.get("Price", 0),
                 "regular_price": raw_prices.get("ListPrice", 0),

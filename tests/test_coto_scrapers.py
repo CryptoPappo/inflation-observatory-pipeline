@@ -26,7 +26,9 @@ def make_mock_product_json_discount():
                      "product.dtoDescuentos": ["[{'precioDescuento': '$1000', 'textoDescuento': '50%'}]"],
                      "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
                     }
-                }
+                },
+            "breadcrumbsConstructor":
+                [{"label": "Inicio"}, {"label": "Almacen"}, {"label": "Leche"}]
             }]
         }]
     }
@@ -46,7 +48,9 @@ def make_mock_product_json_no_discount():
                      "product.dtoDescuentos": ["[]"],
                      "sku.dtoPrice": ["{'precioLista': 2000.0, 'precio': 2500.0, 'precioSinImp': 1750.0}"]
                     }
-                }
+                },
+            "breadcrumbsConstructor": 
+                [{"label": "Inicio"}, {"label": "Almacen"}, {"label": "Leche"}]
             }]
         }]
     }                                                            
