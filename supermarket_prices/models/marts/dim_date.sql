@@ -32,6 +32,6 @@ full_dates as (
 	
 	from date_dimension d
 	left join fiscal_periods f on d.date_day = f.date_day
-),
+)
 
 select * from full_dates
