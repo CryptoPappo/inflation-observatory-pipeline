@@ -24,7 +24,7 @@ full_dates as (
 
 	select 
 		d.*,
-		to_char(d.date_day, 'MM-DD') as month_day
+		to_char(d.date_day, 'MM-DD') as month_day,
 		f.fiscal_week_of_year,
 	    	f.fiscal_week_of_period,
 	    	f.fiscal_period_number,
