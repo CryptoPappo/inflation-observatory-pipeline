@@ -20,7 +20,8 @@ products as (
 
 		----------  strings
 		payload ->> 'name' as product_name,
-		payload ->> 'category' as category_path,
+		payload ->> 'category' as category,
+		payload ->> 'subcategory' as subcategory,
 		payload ->> 'discount' as discount_type,
 
 		----------  numerics

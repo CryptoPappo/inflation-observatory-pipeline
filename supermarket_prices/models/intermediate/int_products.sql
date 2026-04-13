@@ -20,7 +20,8 @@ joined as (
 		products.scrape_id,
 		products.product_id,
 		products.product_name,
-		products.category_path,
+		products.category,
+		products.subcategory,
 		products.discount_type,
 		products.regular_price,
 		products.discount_price,
@@ -32,11 +33,6 @@ joined as (
 				then true
 			else false
 		end as has_discount,
-		
-		-- category_level_1 → category_level_10
-		{% for category_level in range(1, 11) %}
-		split_part(products.category_path, '/', category_level) as category_level_{{category_level}},
-		{% endfor %}
 
 		----------  responses
 		responses.store,
