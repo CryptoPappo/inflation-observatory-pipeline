@@ -1,6 +1,7 @@
 {{
     config(
-        materialized = "table"
+        materialized = 'table',
+	unique_key='date_key'
     )
 }}
 
@@ -8,14 +9,14 @@ with
 
 date_dimension as (
 
-	select * from {{ ref("dates") }}
+	select * from {{ ref('dates') }}
 ),
 
 fiscal_periods as (
 
 	{{
 		dbt_date.get_fiscal_periods(
-			ref("dates"), year_end_month=1, week_start_day=1, shift_year=1
+			ref('dates'), year_end_month=1, week_start_day=1, shift_year=1
 		)
 	}}
 ),
