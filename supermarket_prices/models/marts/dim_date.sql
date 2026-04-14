@@ -111,7 +111,7 @@ step7 as (
 full_holidays as (
 
 	select
-		row_number() over (order by date_day) as date_key,
+		to_char(date_day, 'YYYYMMDD') as date_key,
 		date_day,
 		month_day,
 		prior_date_day,
