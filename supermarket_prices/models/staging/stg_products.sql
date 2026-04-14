@@ -22,6 +22,7 @@ products as (
 		payload ->> 'name' as product_name,
 		payload ->> 'category' as category,
 		payload ->> 'subcategory' as subcategory,
+		payload ->> 'brand' as brand,
 		payload ->> 'discount' as discount_type,
 
 		----------  numerics

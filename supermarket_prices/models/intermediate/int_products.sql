@@ -22,6 +22,7 @@ joined as (
 		products.product_name,
 		products.category,
 		products.subcategory,
+		products.brand,
 		products.discount_type,
 		products.regular_price,
 		products.discount_price,
