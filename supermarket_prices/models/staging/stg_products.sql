@@ -16,7 +16,7 @@ products as (
 		
 		----------  ids
 		scrape_id,
-		(payload ->> 'ean')::bigint as product_id,
+		(payload ->> 'ean')::bigint as ean,
 
 		----------  strings
 		payload ->> 'name' as product_name,

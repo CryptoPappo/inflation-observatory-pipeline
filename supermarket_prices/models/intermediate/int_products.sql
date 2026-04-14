@@ -18,7 +18,7 @@ joined as (
 
 		----------  products 
 		products.scrape_id,
-		products.product_id,
+		products.ean,
 		products.product_name,
 		products.category,
 		products.subcategory,

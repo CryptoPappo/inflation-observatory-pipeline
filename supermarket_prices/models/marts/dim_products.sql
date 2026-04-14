@@ -11,7 +11,8 @@ with
 ranked_products as (
 	
 	select
-		product_id,
+		{{ dbt_utils.generate_surrogate_key(['ean']) }} as product_id,
+		ean,
 		product_name,
 		category,
 		subcategory,
