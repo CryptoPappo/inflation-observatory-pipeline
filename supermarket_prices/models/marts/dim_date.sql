@@ -114,7 +114,7 @@ step7 as (
 full_holidays as (
 
 	select
-		to_char(date_day, 'YYYYMMDD') as date_key,
+		to_char(date_day, 'YYYYMMDD') as date_id,
 		date_day,
 		month_day,
 		prior_date_day,
