@@ -95,7 +95,7 @@ class CarrefourScraper(BaseScraper):
                 products_urls.extend([product.text for product in soup.find_all("loc")])
         
         products_ids = []
-        for product_url in products_urls.copy():
+        for product_url in products_urls[:10].copy():
             try:
                 response = safe_get(
                         session,
@@ -122,7 +122,7 @@ class CarrefourScraper(BaseScraper):
                 )
             
         api_url = "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?fq=productId:"
-        for product_id, product_url in zip(products_ids, products_urls):
+        for product_id, product_url in zip(products_ids, products_urls[:len(products_ids)]):
             headers = self.product_headers(product_url)
             url = api_url + product_id
             try:
@@ -212,15 +212,15 @@ class CarrefourScraper(BaseScraper):
             subcategory = ""
 
         return {
-                "name": raw_json.get("productName", ""),
-                "sku": raw_json.get("productId", ""),
-                "ean": raw_json.get("EAN", [""])[0],
+                "name": raw_json["productName"],
+                "sku": raw_json.get("productId", "0"),
+                "ean": raw_json["EAN"][0],
                 "category": category,
                 "subcategory": subcategory,
                 "unit": raw_json.get("Gramaje leyenda de conversión", [""])[0],
-                "discount_price": raw_prices.get("Price", 0),
-                "regular_price": raw_prices.get("ListPrice", 0),
+                "regular_price": raw_prices["ListPrice"],
+                "discount_price": raw_prices.get("Price", raw_prices["ListPrice"]),
                 "unit_price": raw_json.get("pricePerUnit", "0"),
                 "untaxed_price": 0,
-                "discount": raw_discount["name"]
+                "discount": raw_discount.get("name", "")
         }

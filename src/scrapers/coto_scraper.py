@@ -96,7 +96,7 @@ class CotoScraper(BaseScraper):
                 soup = BeautifulSoup(response.text, "xml")
                 products_urls.extend([product.text for product in soup.find_all("loc")])
 
-        for product_url in products_urls:
+        for product_url in products_urls[:10]:
             headers = self.product_headers(product_url)
             product_url += "?format=json"
             try:
@@ -187,14 +187,14 @@ class CotoScraper(BaseScraper):
             raw_discounts = {"precioDescuento": "", "textoDescuento": ""}
         
         return {
-                "name": raw_attributes.get("product.displayName", [""])[0],
-                "sku": raw_attributes.get("sku.repositoryId", [""])[0],
-                "ean": raw_attributes.get("product.eanPrincipal", [""])[0],
+                "name": raw_attributes["product.displayName"][0],
+                "sku": raw_attributes.get("sku.repositoryId", ["0"])[0],
+                "ean": raw_attributes["product.eanPrincipal"][0],
                 "category": category,
                 "subcategory": subcategory,
                 "unit": raw_attributes.get("sku.unit_of_measure", [""])[0],
-                "discount_price": raw_discounts.get("precioDescuento", "0"),
-                "regular_price": raw_prices.get("precioLista", 0),
+                "regular_price": raw_prices["precioLista"],
+                "discount_price": raw_discounts.get("precioDescuento", f"{raw_prices['precioLista']}"),
                 "unit_price": raw_prices.get("precio", 0),
                 "untaxed_price": raw_prices.get("precioSinImp", 0),
                 "discount": raw_discounts.get("textoDescuento", "")
