@@ -15,7 +15,8 @@ facts as (
 		dp.product_id,
 		ds.store_id,
 		ip.regular_price,
-		ip.discount_price
+		ip.discount_price,
+		ip.scraped_at
 	
 	from {{ ref('int_products') }} ip
 	inner join {{ ref('dim_date') }} dd
@@ -24,6 +25,10 @@ facts as (
 		on ip.ean = dp.ean
 	inner join {{ ref('dim_store') }} ds
 		on ip.store = ds.store
+
+	{% if is_incremental() %}
+	where ip.scraped_at > (select max(scraped_at) from {{ this }})
+	{% endif %}
 
 )
 
