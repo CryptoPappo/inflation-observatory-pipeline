@@ -2,7 +2,7 @@ with
 
 source as (
 
-	select * from {{ source('raw', 'raw_responses') }}
+	select * from {{ source('public', 'raw_responses') }}
 
 ),
 

@@ -6,7 +6,7 @@ source as (
 		scrape_id,
 		normalized_payload as payload
 
-	from {{ source('raw', 'normalized_responses') }}
+	from {{ source('public', 'normalized_responses') }}
 
 ),
 

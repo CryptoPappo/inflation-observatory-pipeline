@@ -1,7 +1,7 @@
 version: 1
 
 sources:
-  - name: raw
+  - name: public
     database: inflation_db
     tables:
       - name: raw_responses

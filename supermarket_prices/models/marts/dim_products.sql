@@ -8,7 +8,7 @@
 
 with
 
-ranked_products as (
+products as (
 	
 	select
 		{{ dbt_utils.generate_surrogate_key(['ean']) }} as product_id,
@@ -17,15 +17,25 @@ ranked_products as (
 		category,
 		subcategory,
 		brand,
-		scraped_at,
-		row_number() over (partition by product_id order by scraped_at desc) as rn
+		scraped_at
 
 	from {{ ref('int_products') }}
+
+),
+
+ranked_products as (
+
+	select
+		p.*,
+		row_number() over (partition by product_id order by scraped_at desc) as rn
+
+	from products p
 
 )
 
 select 
 	product_id,
+	ean,
 	product_name,
 	category,
 	subcategory,
