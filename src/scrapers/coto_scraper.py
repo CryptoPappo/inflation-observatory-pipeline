@@ -192,6 +192,7 @@ class CotoScraper(BaseScraper):
                 "ean": raw_attributes["product.eanPrincipal"][0],
                 "category": category,
                 "subcategory": subcategory,
+                "brand": raw_attributes.get("product.brand", [""])[0],
                 "unit": raw_attributes.get("sku.unit_of_measure", [""])[0],
                 "regular_price": raw_prices["precioLista"],
                 "discount_price": raw_discounts.get("precioDescuento", f"{raw_prices['precioLista']}"),

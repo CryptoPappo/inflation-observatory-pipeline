@@ -217,6 +217,7 @@ class CarrefourScraper(BaseScraper):
                 "ean": raw_json["EAN"][0],
                 "category": category,
                 "subcategory": subcategory,
+                "brand": raw_json.get("brand", ""),
                 "unit": raw_json.get("Gramaje leyenda de conversión", [""])[0],
                 "regular_price": raw_prices["ListPrice"],
                 "discount_price": raw_prices.get("Price", raw_prices["ListPrice"]),
