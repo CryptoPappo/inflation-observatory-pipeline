@@ -26,8 +26,8 @@ products as (
 		payload ->> 'discount' as discount_type,
 
 		----------  numerics
-		(payload ->> 'regular_price')::numeric as regular_price,
-		(payload ->> 'discount_price')::numeric as discount_price
+		regex_replace(payload ->> 'regular_price', '[^0-9.]', 'g')::numeric as regular_price,
+		regex_replace(payload ->> 'discount_price', '[^0-9.]', 'g')::numeric as discount_price
 	
 	from source
 
