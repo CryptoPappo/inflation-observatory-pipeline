@@ -168,7 +168,7 @@ class CotoScraper(BaseScraper):
         raw_json = json.loads(raw_data)
         
         raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
-        
+
         raw_categories = raw_json["contents"][0]["Main"][0]["breadcrumbsConstructor"]
         try:
             category = raw_categories[1]["label"]
@@ -180,11 +180,12 @@ class CotoScraper(BaseScraper):
             subcategory = ""
 
         raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])
+        regular_price = raw_prices["precioLista"]
         
         try:
             raw_discounts = ast.literal_eval(raw_attributes["product.dtoDescuentos"][0])[0]
         except IndexError:
-            raw_discounts = {"precioDescuento": "", "textoDescuento": ""}
+            raw_discounts = {"precioDescuento": f"{regular_price}", "textoDescuento": ""}
         
         return {
                 "name": raw_attributes["product.displayName"][0],
@@ -194,8 +195,8 @@ class CotoScraper(BaseScraper):
                 "subcategory": subcategory,
                 "brand": raw_attributes.get("product.brand", [""])[0],
                 "unit": raw_attributes.get("sku.unit_of_measure", [""])[0],
-                "regular_price": raw_prices["precioLista"],
-                "discount_price": raw_discounts.get("precioDescuento", f"{raw_prices['precioLista']}"),
+                "regular_price": regular_price,
+                "discount_price": raw_discounts.get("precioDescuento", f"{regular_price}"),
                 "unit_price": raw_prices.get("precio", 0),
                 "untaxed_price": raw_prices.get("precioSinImp", 0),
                 "discount": raw_discounts.get("textoDescuento", "")
