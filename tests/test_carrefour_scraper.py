@@ -11,6 +11,7 @@ sys.path.append(parent_dir)
 
 from src.scrapers.carrefour_scraper import CarrefourScraper
 from src.models.raw_tables import Base, RawResponses, NormalizedResponses
+from src.loaders.load_raw_data import load_raw_responses, load_normalized_responses
 
 def make_mock_product_json_discount():
     return """
@@ -41,7 +42,10 @@ def test_carrefour_scrape():
     mock_sitemap_data = """<?xml version="1.0" encoding="UTF-8"?>
     <urlset>
         <url>
-            <loc>https://supermarket.com/productos</loc>
+            <loc>https://supermarket.com/productos-1</loc>
+        </url>
+        <url>
+            <loc>https://supermarket.com/productos-2</loc>
         </url>
         <url>
             <loc>https://supermarket.com/categorias</loc>
@@ -74,10 +78,16 @@ def test_carrefour_scrape():
     """
     responses.add(
         responses.GET,
-        "https://supermarket.com/productos",
+        "https://supermarket.com/productos-1",
         body=mock_products,
         status=200,
         content_type="application/xml"
+    )
+
+    responses.add(
+        responses.GET,
+        "https://supermarket.com/productos-2",
+        body=requests.exceptions.HTTPError("HTTPError")
     )
 
     mock_source_1 = """
@@ -142,7 +152,22 @@ def test_carrefour_scrape():
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(bind=engine)
-    scraper.scrape(Session)
+    
+    raw_responses = scraper.scrape()
+    load_raw_responses(raw_responses, Session)
+    
+    normalized_responses = []
+    for raw_response in raw_responses:
+        if raw_response["response_category"] != "product":
+            continue
+        else:
+            normalized_responses.append(
+                    {
+                        "scrape_id": raw_response["scrape_id"],
+                        "normalized_payload": scraper_by_store[store].parse(raw_response["payload"])
+                    }
+            )
+    load_normalized_responses(normalized_responses, Session)
     
     with Session() as session:
         rows_raw = session.execute(select(RawResponses)).all()

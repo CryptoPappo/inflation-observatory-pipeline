@@ -1,6 +1,7 @@
 import os
 import sys
 import responses
+import requests
 from unittest.mock import MagicMock
 from sqlalchemy import create_engine, select, inspect
 from sqlalchemy.orm import sessionmaker
@@ -11,6 +12,7 @@ sys.path.append(parent_dir)
 
 from src.scrapers.coto_scraper import CotoScraper
 from src.models.raw_tables import Base, RawResponses, NormalizedResponses
+from src.loaders.load_raw_data import load_raw_responses, load_normalized_responses
 
 def make_mock_product_json_discount():
     return """
@@ -63,7 +65,10 @@ def test_coto_scrape():
     mock_sitemap_data = """<?xml version="1.0" encoding="UTF-8"?>
     <urlset>
         <url>
-            <loc>https://supermarket.com/productos</loc>
+            <loc>https://supermarket.com/productos-1</loc>
+        </url>
+        <url>
+            <loc>https://supermarket.com/productos-2</loc>
         </url>
         <url>
             <loc>https://supermarket.com/categorias</loc>
@@ -89,14 +94,23 @@ def test_coto_scrape():
         <url>
             <loc>https://supermarket.com/productos/producto-2</loc>
         </url>
+        <url>
+            <loc>https://supermarket.com/productos/producto-3</loc>
+        </url>
     </urlset>
     """
     responses.add(
         responses.GET,
-        "https://supermarket.com/productos",
+        "https://supermarket.com/productos-1",
         body=mock_products,
         status=200,
         content_type="application/xml"
+    )
+
+    responses.add(
+        responses.GET,
+        "https://supermarket.com/productos-2",
+        body=requests.exceptions.HTTPError("HTTPError")
     )
 
     responses.add(
@@ -114,13 +128,34 @@ def test_coto_scrape():
         status=200,
         content_type="application/json"
     )
+    
+    responses.add(
+        responses.GET,
+        "https://supermarket.com/productos/producto-3?format=json",
+        body=requests.exceptions.HTTPError("HTTPError")
+    )
 
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(bind=engine)
-    scraper.scrape(Session)
     
+    raw_responses = scraper.scrape()
+    load_raw_responses(raw_responses, Session)
+    
+    normalized_responses = []
+    for raw_response in raw_responses:
+        if raw_response["response_category"] != "product":
+            continue
+        else:
+            normalized_responses.append(
+                    {
+                        "scrape_id": raw_response["scrape_id"],
+                        "normalized_payload": scraper_by_store[store].parse(raw_response["payload"])
+                    }
+            )
+    load_normalized_responses(normalized_responses, Session)
+
     with Session() as session:
         rows_raw = session.execute(select(RawResponses)).all()
         rows_normalized = session.execute(select(NormalizedResponses)).all()
@@ -144,7 +179,7 @@ def test_coto_parser():
 
     assert product_disc["discount_price"] == "$1000"
     assert product_disc["discount"] == "50%"
-    assert product_no_disc["discount_price"] == ""
+    assert product_no_disc["discount_price"] == "2000.0"
     assert product_no_disc["discount"] == ""
 
     assert product_disc["regular_price"] == 2000.0

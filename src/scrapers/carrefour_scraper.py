@@ -73,7 +73,7 @@ class CarrefourScraper(BaseScraper):
                         timeout=10
                 )
             except Exception as e:
-                logger.exception(f"An error ocurred with carrefour products.xml call: {products_url}")
+                logger.exception(f"An error ocurred with carrefour products.xml call: {product_xml_url}")
             else:
                 logger.info("Finished downloading carrefour products xml")
                 raw_responses.append(

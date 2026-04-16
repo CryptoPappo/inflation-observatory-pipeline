@@ -75,7 +75,7 @@ class CotoScraper(BaseScraper):
                         timeout=10
                 )
             except Exception as e:
-                logger.exception(f"An error ocurred with coto products.xml call: {products_url}")
+                logger.exception(f"An error ocurred with coto products.xml call: {product_xml_url}")
             else:
                 logger.info("Finished downloading coto products xml")
                 raw_responses.append(

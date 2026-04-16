@@ -1,4 +1,4 @@
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert 
 from sqlalchemy.orm.session import sessionmaker
 
 from src.utils.logging import get_logger
