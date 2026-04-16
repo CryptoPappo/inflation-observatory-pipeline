@@ -13,8 +13,8 @@ class BaseScraper(ABC):
         """Headers to get products raw json"""
 
     @abstractmethod
-    def scrape(self, Session: sessionmaker) -> None:
-        """Render pages and store raw HTML / responses"""
+    def scrape(self) -> list[dict]:
+        """Render pages and returns raw HTML / responses"""
 
     @abstractmethod
     def parse(self, raw_data: str) -> dict:
