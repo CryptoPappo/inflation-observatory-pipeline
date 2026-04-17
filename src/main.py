@@ -29,13 +29,13 @@ def main():
 
     Base.metadata.create_all(engine)
     
-    scrapers_by_store = {
+    scraper_by_store = {
             "coto": CotoScraper(),
             "carrefour": CarrefourScraper()
     }
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        
-        future_to_store = {executor.submit(scraper.scrape): store for store, scraper in scrapers_by_store.items()}
+
+        future_to_store = {executor.submit(scraper.scrape): store for store, scraper in scraper_by_store.items()}
         for future in concurrent.futures.as_completed(future_to_store):
             store = future_to_store[future] 
             try:
