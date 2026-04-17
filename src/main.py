@@ -35,9 +35,9 @@ def main():
     }
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         
-        futures_to_store = {executor.submit(scraper.scrape): store for store, scraper in scrapers_by_store.items()}
+        future_to_store = {executor.submit(scraper.scrape): store for store, scraper in scrapers_by_store.items()}
         for future in concurrent.futures.as_completed(future_to_store):
-            store = futures_to_store[future] 
+            store = future_to_store[future] 
             try:
                 raw_responses = future.result()
             except Exception as e:
