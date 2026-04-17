@@ -17,7 +17,7 @@ class CarrefourScraper(BaseScraper):
     def base_url(self) -> str:
         return "https://www.carrefour.com.ar/sitemap.xml"
     
-    def product_headers(self, product_url: str) -> str:
+    def product_headers(self, product_url: str) -> dict[str, str]:
         return {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0",
                 "Accept": "*/*",
@@ -110,20 +110,25 @@ class CarrefourScraper(BaseScraper):
             else:
                 logger.info(f"Downloaded carrefour source code of product: {product_url}")
                 source_code = response.text
-                product_id = re.search(r"\"productId\":\"[0-9]+\"", source_code).group(0)
-                products_ids.append(product_id.split("\"")[-2])
-                raw_responses.append(
-                        {
-                            "raw_id": uuid.uuid4().hex,
-                            "scrape_id": scrape_id,
-                            "store": "carrefour",
-                            "url": product_url,
-                            "response_type": "html",
-                            "response_category": "product",
-                            "payload": source_code,
-                            "time": datetime.utcnow()
-                        }
-                )
+                match_ = re.search(r"\"productId\":\"[0-9]+\"", source_code)
+                if match_ is None:
+                    continue
+                else:
+                    product_id_match = match_.group(0)
+                    product_id = product_id_match.split("\"")[-2]
+                    products_ids.append(product_id)
+                    raw_responses.append(
+                            {
+                                "raw_id": uuid.uuid4().hex,
+                                "scrape_id": scrape_id,
+                                "store": "carrefour",
+                                "url": product_url,
+                                "response_type": "html",
+                                "response_category": "product",
+                                "payload": source_code,
+                                "time": datetime.utcnow()
+                            }
+                    )
             
         api_url = "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?fq=productId:"
         for product_id, product_url in zip(products_ids, products_urls[:len(products_ids)]):

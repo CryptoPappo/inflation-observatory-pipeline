@@ -16,7 +16,7 @@ class CotoScraper(BaseScraper):
     def base_url(self) -> str:
         return "https://www.cotodigital.com.ar/sitios/cdigi/sitemap.xml"
 
-    def product_headers(self, product_url: str) -> str:
+    def product_headers(self, product_url: str) -> dict[str, str]:
         return {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0",
                 "Accept": "application/json, text/plain, */*",
@@ -135,11 +135,11 @@ class CotoScraper(BaseScraper):
         raw_categories = raw_json["contents"][0]["Main"][0]["breadcrumbsConstructor"]
         try:
             category = raw_categories[1]["label"]
-        except IndexError or KeyError:
+        except Exception as e:
             category = ""
         try:
             subcategory = raw_categories[-1]["label"]
-        except IndexError or KeyError:
+        except Exception as e:
             subcategory = ""
 
         raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])

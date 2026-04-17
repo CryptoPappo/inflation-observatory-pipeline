@@ -9,7 +9,7 @@ class BaseScraper(ABC):
         """Base URL or entry point for the scraper"""
 
     @abstractmethod
-    def product_headers(self, product_url: str) -> str:
+    def product_headers(self, product_url: str) -> dict[str, str]:
         """Headers to get products raw json"""
 
     @abstractmethod

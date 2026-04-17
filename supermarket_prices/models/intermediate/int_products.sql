@@ -28,7 +28,7 @@ joined as (
 		products.discount_price,
 
 		----------  responses
-		resonses.scrape_id,
+		responses.scrape_id,
 		responses.store,
 		responses.scraped_at
 
