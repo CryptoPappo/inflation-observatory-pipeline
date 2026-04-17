@@ -3,7 +3,7 @@ with
 source as (
 
 	select
-		scrape_id,
+		raw_id,
 		normalized_payload as payload
 
 	from {{ source('public', 'normalized_responses') }}
@@ -15,7 +15,7 @@ products as (
 	select
 		
 		----------  ids
-		scrape_id,
+		raw_id,
 		(payload ->> 'ean')::bigint as ean,
 
 		----------  strings

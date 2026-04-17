@@ -16,8 +16,8 @@ joined as (
 
 	select
 
-		----------  products 
-		products.scrape_id,
+		----------  products
+		products.raw_id,
 		products.ean,
 		products.product_name,
 		products.category,
@@ -28,13 +28,14 @@ joined as (
 		products.discount_price,
 
 		----------  responses
+		resonses.scrape_id,
 		responses.store,
 		responses.scraped_at
 
 	from products
 
 	inner join responses
-		on products.scrape_id = responses.scrape_id
+		on products.raw_id = responses.raw_id
 
 )
 

@@ -1,7 +1,7 @@
 {{
 	config(
 		materialized='incremental',
-		unique_key=['product_id', 'store_id', 'date_id']
+		unique_key='raw_id'
 	)
 }}
 
@@ -10,6 +10,7 @@ with
 facts as (
 
 	select
+		ip.raw_id,
 		ip.scrape_id,
 		dd.date_id,
 		dp.product_id,

@@ -11,6 +11,7 @@ responses as (
 	select
 		
 		----------  ids
+		raw_id,
 		scrape_id,
 
 		----------  strings
