@@ -1,3 +1,4 @@
+import uuid
 import tenacity
 import json
 import ast
@@ -32,6 +33,8 @@ class CotoScraper(BaseScraper):
         }
 
     def scrape(self) -> list[dict]:
+        scrape_id = datetime.utcnow().strftime("%Y-%m-%d_coto")
+
         session = LimiterSession(
             per_second=1,
             per_minute=60
@@ -50,6 +53,8 @@ class CotoScraper(BaseScraper):
         logger.info("Finished downloading coto sitemap xml")
         raw_responses.append(
                 {
+                    "raw_id": uuid.uuid4().hex,
+                    "scrape_id": scrape_id,
                     "store": "coto",
                     "url": self.base_url,
                     "response_type": "xml",
@@ -80,6 +85,8 @@ class CotoScraper(BaseScraper):
                 logger.info("Finished downloading coto products xml")
                 raw_responses.append(
                         {
+                            "raw_id": uuid.uuid4().hex,
+                            "scrape_id": scrape_id,
                             "store": "coto",
                             "url": product_xml_url,
                             "response_type": "xml",
@@ -107,6 +114,8 @@ class CotoScraper(BaseScraper):
                 logger.info(f"Donwloaded coto product: {product_url}")
                 raw_responses.append(
                         {
+                            "raw_id": uuid.uuid4().hex,
+                            "scrape_id": scrape_id,
                             "store": "coto",
                             "url": product_url,
                             "response_type": "json",

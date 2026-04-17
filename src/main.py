@@ -47,12 +47,13 @@ def main():
                 
                 normalized_responses = []
                 for raw_response in raw_responses:
-                    if raw_response["response_category"] != "product":
+                    if raw_response["response_category"] != "product" or\
+                            raw_response["response_type"] != "json":
                         continue
                     try:
                         normalized_responses.append(
                                 {
-                                    "scrape_id": raw_response["scrape_id"],
+                                    "raw_id": raw_response["raw_id"],
                                     "normalized_payload": scraper_by_store[store].parse(raw_response["payload"])
                                 }
                         )

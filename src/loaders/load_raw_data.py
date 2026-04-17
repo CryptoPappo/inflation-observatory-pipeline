@@ -11,7 +11,7 @@ def load_raw_responses(
 ):
     stmt = insert(RawResponses).values(raw_responses)
     stmt = stmt.on_conflict_do_nothing(
-            index_elements=[RawResponses.scrape_id]
+            index_elements=[RawResponses.raw_id]
     )
     with Session() as session:
         rows = session.execute(stmt)
@@ -27,7 +27,7 @@ def load_normalized_responses(
 ):
     stmt = insert(NormalizedResponses).values(normalized_responses)
     stmt = stmt.on_conflict_do_nothing(
-            index_elements=[NormalizedResponses.scrape_id]
+            index_elements=[NormalizedResponses.raw_id]
     )
     with Session() as session:
         rows = session.execute(stmt)

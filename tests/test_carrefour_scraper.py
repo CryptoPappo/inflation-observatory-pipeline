@@ -108,7 +108,7 @@ def test_carrefour_scrape():
         content_type="text/html"
     )
 
-    mock_source_1 = """
+    mock_source_2 = """
     <!DOCTYPE html>
     <html lang="es-AR">
     <head>
@@ -121,7 +121,7 @@ def test_carrefour_scrape():
     responses.add(
         responses.GET,
         "https://supermarket.com/productos/producto-2",
-        body=mock_source_1,
+        body=mock_source_2,
         status=200,
         content_type="text/html"
     )
@@ -158,13 +158,14 @@ def test_carrefour_scrape():
     
     normalized_responses = []
     for raw_response in raw_responses:
-        if raw_response["response_category"] != "product":
+        if raw_response["response_category"] != "product" or\
+                raw_response["response_type"] != "json":
             continue
         else:
             normalized_responses.append(
                     {
-                        "scrape_id": raw_response["scrape_id"],
-                        "normalized_payload": scraper_by_store[store].parse(raw_response["payload"])
+                        "raw_id": raw_response["raw_id"],
+                        "normalized_payload": scraper.parse(raw_response["payload"])
                     }
             )
     load_normalized_responses(normalized_responses, Session)
@@ -181,8 +182,8 @@ def test_carrefour_scrape():
                 .where(RawResponses.response_category == "product")
         ).all()
 
-        raw_scrape_ids = {row[0].scrape_id for row in rows_raw_json}
-        normalized_scrape_ids = {row[0].scrape_id for row in rows_normalized}
+        raw_scrape_ids = {row[0].raw_id for row in rows_raw_json}
+        normalized_scrape_ids = {row[0].raw_id for row in rows_normalized}
         assert raw_scrape_ids == normalized_scrape_ids
 
 def test_carrefour_parser():

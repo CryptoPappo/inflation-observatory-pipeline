@@ -1,3 +1,4 @@
+import uuid
 import re
 import tenacity
 import json
@@ -30,6 +31,8 @@ class CarrefourScraper(BaseScraper):
         }
 
     def scrape(self) -> list[dict]:
+        scrape_id = datetime.utcnow().strftime("%Y-%m-%d_carrefour")
+
         session = LimiterSession(
             per_second=1,
             per_minute=60
@@ -48,6 +51,8 @@ class CarrefourScraper(BaseScraper):
         logger.info("Finished downloading carrefour sitemap xml")
         raw_responses.append(
                 {
+                    "raw_id": uuid.uuid4().hex,
+                    "scrape_id": scrape_id,
                     "store": "carrefour",
                     "url": self.base_url,
                     "response_type": "xml",
@@ -78,6 +83,8 @@ class CarrefourScraper(BaseScraper):
                 logger.info("Finished downloading carrefour products xml")
                 raw_responses.append(
                         {
+                            "raw_id": uuid.uuid4().hex,
+                            "scrape_id": scrape_id,
                             "store": "carrefour",
                             "url": product_xml_url,
                             "response_type": "xml",
@@ -107,6 +114,8 @@ class CarrefourScraper(BaseScraper):
                 products_ids.append(product_id.split("\"")[-2])
                 raw_responses.append(
                         {
+                            "raw_id": uuid.uuid4().hex,
+                            "scrape_id": scrape_id,
                             "store": "carrefour",
                             "url": product_url,
                             "response_type": "html",
@@ -133,6 +142,8 @@ class CarrefourScraper(BaseScraper):
                 logger.info(f"Downloaded carrefour product json: {url}")
                 raw_responses.append(
                         {
+                            "raw_id": uuid.uuid4().hex,
+                            "scrape_id": scrape_id,
                             "store": "carrefour",
                             "url": url,
                             "response_type": "json",

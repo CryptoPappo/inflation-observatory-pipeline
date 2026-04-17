@@ -150,8 +150,8 @@ def test_coto_scrape():
         else:
             normalized_responses.append(
                     {
-                        "scrape_id": raw_response["scrape_id"],
-                        "normalized_payload": scraper_by_store[store].parse(raw_response["payload"])
+                        "raw_id": raw_response["raw_id"],
+                        "normalized_payload": scraper.parse(raw_response["payload"])
                     }
             )
     load_normalized_responses(normalized_responses, Session)
@@ -168,8 +168,8 @@ def test_coto_scrape():
                 .where(RawResponses.response_category == "product")
         ).all()
 
-        raw_scrape_ids = {row[0].scrape_id for row in rows_raw_json}
-        normalized_scrape_ids = {row[0].scrape_id for row in rows_normalized}
+        raw_scrape_ids = {row[0].raw_id for row in rows_raw_json}
+        normalized_scrape_ids = {row[0].raw_id for row in rows_normalized}
         assert raw_scrape_ids == normalized_scrape_ids
     
 def test_coto_parser():

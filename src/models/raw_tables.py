@@ -18,8 +18,12 @@ class Base(DeclarativeBase):
 
 class RawResponses(Base):
     __tablename__ = "raw_responses"
-
-    scrape_id: Mapped[int] = mapped_column(primary_key=True)
+    
+    raw_id: Mapped[str] = mapped_column(
+            String(32),
+            primary_key=True
+    )
+    scrape_id: Mapped[str] = mapped_column(String(255))
     store: Mapped[str] = mapped_column(String(255))
     url: Mapped[str] = mapped_column(String(255))
     response_type: Mapped[str] = mapped_column(String(5))
@@ -36,8 +40,9 @@ class RawResponses(Base):
 class NormalizedResponses(Base):
     __tablename__ = "normalized_responses"
 
-    scrape_id: Mapped[int] = mapped_column(
-            ForeignKey("raw_responses.scrape_id"),
+    raw_id: Mapped[str] = mapped_column(
+            String(32),
+            ForeignKey("raw_responses.raw_id"),
             primary_key=True
     )
     normalized_payload: Mapped[JSON] = mapped_column(JSON)
@@ -45,4 +50,4 @@ class NormalizedResponses(Base):
     raw: Mapped[RawResponses] = relationship(back_populates="normalized")
 
     def __repr__(self) -> str:
-        return f"NormalizedRespones(scrape_id={self.scrape_id})"
+        return f"NormalizedRespones(raw_id={self.raw_id})"
