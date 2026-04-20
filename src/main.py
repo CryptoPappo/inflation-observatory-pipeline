@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from prefect import flow, task, get_run_logger
+from prefect.task_runners import ThreadPoolTaskRunner
 
 from src.models.raw_tables import Base
 from src.scrapers.coto_scraper import CotoScraper
@@ -72,7 +73,7 @@ def load_normalized(
 ):
     load_normalized_responses(normalized_responses, session)
 
-@flow
+@flow(task_runner=ThreadPoolTaskRunner(max_workers=2), log_prints=True)
 def main():
     logger = get_run_logger()
 
@@ -102,6 +103,7 @@ def main():
         scraper = scraper_cls(scrape_id=scrape_id)
 
         raw = scrape.submit(scraper)
+        print(raw)
         load_raw.submit(raw, session, wait_for=[raw])
 
         parsed = parse.submit(scraper, raw, wait_for=[raw])
