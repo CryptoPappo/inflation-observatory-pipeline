@@ -2,6 +2,7 @@ import os
 import sys
 import responses
 import requests
+from datetime import datetime
 from sqlalchemy import create_engine, select, inspect
 from sqlalchemy.orm import sessionmaker
 
@@ -37,7 +38,8 @@ def make_mock_product_json_no_discount():
     """
 @responses.activate
 def test_carrefour_scrape():
-    scraper = CarrefourScraper()
+    scrape_id = datetime.utcnow().strftime("%Y-%m-%d")
+    scraper = CarrefourScraper(scrape_id)
    
     mock_sitemap_data = """<?xml version="1.0" encoding="UTF-8"?>
     <urlset>
@@ -187,7 +189,9 @@ def test_carrefour_scrape():
         assert raw_scrape_ids == normalized_scrape_ids
 
 def test_carrefour_parser():
-    parser = CarrefourScraper()
+    scrape_id = datetime.utcnow().strftime("%Y-%m-%d")
+    parser = CarrefourScraper(scrape_id)
+
     product_disc = parser.parse(make_mock_product_json_discount())
     product_no_disc = parser.parse(make_mock_product_json_no_discount())
 
