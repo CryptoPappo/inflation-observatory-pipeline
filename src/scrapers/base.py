@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
-from selenium.webdriver.firefox.webdriver import WebDriver
-from sqlalchemy.orm.session import sessionmaker
 
 class BaseScraper(ABC):
+
+    @property
+    @abstractmethod
+    def store(self) -> str:
+        """Unique store identifier (e.g. 'coto', 'carrefour')"""
+
     @property
     @abstractmethod
     def base_url(self) -> str:

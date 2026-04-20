@@ -12,10 +12,12 @@ from src.scrapers.base import BaseScraper
 logger = get_logger("coto_scraper")
 
 class CotoScraper(BaseScraper):
-    @property
-    def base_url(self) -> str:
-        return "https://www.cotodigital.com.ar/sitios/cdigi/sitemap.xml"
+    base_url = "https://www.cotodigital.com.ar/sitios/cdigi/sitemap.xml"
+    store = "coto"
 
+    def __init__(self, scrape_id: str):
+        self.scrape_id = scrape_id
+    
     def product_headers(self, product_url: str) -> dict[str, str]:
         return {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0",
@@ -54,8 +56,8 @@ class CotoScraper(BaseScraper):
         raw_responses.append(
                 {
                     "raw_id": uuid.uuid4().hex,
-                    "scrape_id": scrape_id,
-                    "store": "coto",
+                    "scrape_id": self.scrape_id,
+                    "store": self.store,
                     "url": self.base_url,
                     "response_type": "xml",
                     "response_category": "sitemap",
@@ -86,8 +88,8 @@ class CotoScraper(BaseScraper):
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,
-                            "scrape_id": scrape_id,
-                            "store": "coto",
+                            "scrape_id": self.scrape_id,
+                            "store": self.store,
                             "url": product_xml_url,
                             "response_type": "xml",
                             "response_category": "products",
@@ -115,8 +117,8 @@ class CotoScraper(BaseScraper):
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,
-                            "scrape_id": scrape_id,
-                            "store": "coto",
+                            "scrape_id": self.scrape_id,
+                            "store": self.store,
                             "url": product_url,
                             "response_type": "json",
                             "response_category": "product",
