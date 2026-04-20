@@ -103,11 +103,10 @@ def main():
         scraper = scraper_cls(scrape_id=scrape_id)
 
         raw = scrape.submit(scraper)
-        print(raw)
-        load_raw.submit(raw, session, wait_for=[raw])
+        load_raw.submit(raw, session)
 
-        parsed = parse.submit(scraper, raw, wait_for=[raw])
-        load_normalized.submit(parsed, session, wait_for=[parsed])
+        parsed = parse.submit(scraper, raw)
+        load_normalized.submit(parsed, session)
     
 if __name__ == "__main__":
     main()
