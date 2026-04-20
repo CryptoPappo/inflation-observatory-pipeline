@@ -73,7 +73,7 @@ def load_normalized(
 ):
     load_normalized_responses(normalized_responses, session)
 
-@flow(task_runner=ThreadPoolTaskRunner(max_workers=2), log_prints=True)
+@flow(task_runner=ThreadPoolTaskRunner(), log_prints=True)
 def main():
     logger = get_run_logger()
 
