@@ -7,4 +7,3 @@ psycopg2-binary
 requests-ratelimiter
 tenacity
 dbt-postgres
-prefect

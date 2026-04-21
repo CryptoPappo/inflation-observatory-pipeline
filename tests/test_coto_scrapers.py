@@ -2,7 +2,6 @@ import os
 import sys
 import responses
 import requests
-from datetime import datetime
 from unittest.mock import MagicMock
 from sqlalchemy import create_engine, select, inspect
 from sqlalchemy.orm import sessionmaker
@@ -61,8 +60,7 @@ def make_mock_product_json_no_discount():
 
 @responses.activate
 def test_coto_scrape():
-    scrape_id = datetime.utcnow().strftime("%Y-%m-%d")
-    scraper = CotoScraper(scrape_id)
+    scraper = CotoScraper()
     
     mock_sitemap_data = """<?xml version="1.0" encoding="UTF-8"?>
     <urlset>
@@ -175,7 +173,7 @@ def test_coto_scrape():
         assert raw_scrape_ids == normalized_scrape_ids
     
 def test_coto_parser():
-    parser = CotoScraper(scrape_id=None)
+    parser = CotoScraper()
     product_disc = parser.parse(make_mock_product_json_discount())
     product_no_disc = parser.parse(make_mock_product_json_no_discount())
 
