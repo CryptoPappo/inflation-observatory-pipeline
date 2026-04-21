@@ -16,7 +16,7 @@ class CarrefourScraper(BaseScraper):
     base_url = "https://www.carrefour.com.ar/sitemap.xml"
     store = "carrefour"
 
-    def __init__(self, scrape_id: str):
+    def __init__(self, scrape_id: str | None):
         self.scrape_id = scrape_id
         
     def product_headers(self, product_url: str) -> dict[str, str]:

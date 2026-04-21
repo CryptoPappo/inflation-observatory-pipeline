@@ -7,6 +7,7 @@ from prefect import flow, task, get_run_logger
 from prefect.task_runners import ThreadPoolTaskRunner
 
 from src.models.raw_tables import Base
+from src.scrapers.base import BaseScraper
 from src.scrapers.coto_scraper import CotoScraper
 from src.scrapers.carrefour_scraper import CarrefourScraper
 from src.loaders.load_raw_data import load_raw_responses, load_normalized_responses
@@ -15,37 +16,46 @@ from src.loaders.load_raw_data import load_raw_responses, load_normalized_respon
     retries=3,
     retry_delay_seconds=60 * 15
 )
-def scrape(scraper):
+def scrape(
+        scraper_cls: BaseScraper,
+        scrape_id: str
+):
     logger = get_run_logger()
 
     logger.info(f"Starting scrape for {scraper.store}")
 
+    scraper = scraper_cls(scrape_id=scrape_id)
     try:
         raw_responses = scraper.scrape()
         logger.info(f"Scraped {len(raw_responses)} items for {scraper.store}")        
         return raw_responses
     except Exception as e:
         logger.exception(f"Scrape failed for {scraper.store}")
+        raise
 
 @task(
     retries=2,
     retry_delay_seconds=120
 )
 def load_raw(
-        raw_responses,
-        session
+        raw_responses: list[dict],
+        db_url: str
 ):
+    engine = create_engine(db_url)
+    session = sessionmaker(bind=engine)
+
     load_raw_responses(raw_responses, session)
 
 @task
 def parse(
-        scraper,
-        raw_responses
+        scraper_cls: BaseScraper,
+        raw_responses: list[dict]
 ):
     logger = get_run_logger()
     
     logger.info(f"Starting parsing for {scraper.store}")
 
+    scraper = scraper_cls(scraper_id=None)
     normalized_responses = []
     for raw_response in raw_responses:
         if raw_response["response_category"] != "product" or\
@@ -68,9 +78,12 @@ def parse(
     retry_delay_seconds=120
 )
 def load_normalized(
-        normalized_responses,
-        session
+        normalized_responses: list[dict],
+        db_url: str
 ):
+    engine = create_engine(db_url)
+    session = sessionmaker(bind=engine)
+
     load_normalized_responses(normalized_responses, session)
 
 @flow(task_runner=ThreadPoolTaskRunner(), log_prints=True)
@@ -100,13 +113,11 @@ def main():
     ]
     scrape_id = datetime.utcnow().strftime("%Y-%m-%d")
     for scraper_cls in scrapers_cls:
-        scraper = scraper_cls(scrape_id=scrape_id)
+        raw = scrape.submit(scraper_cls, scrape_id)
+        load_raw.submit(raw, db_url, wait_for=[raw])
 
-        raw = scrape.submit(scraper)
-        load_raw.submit(raw, session)
-
-        parsed = parse.submit(scraper, raw)
-        load_normalized.submit(parsed, session)
+        parsed = parse.submit(scraper_cls, raw, wait_for=[raw])
+        load_normalized.submit(parsed, db_url, wait_for=[parsed])
     
 if __name__ == "__main__":
     main()

@@ -15,7 +15,7 @@ class CotoScraper(BaseScraper):
     base_url = "https://www.cotodigital.com.ar/sitios/cdigi/sitemap.xml"
     store = "coto"
 
-    def __init__(self, scrape_id: str):
+    def __init__(self, scrape_id: str | None):
         self.scrape_id = scrape_id
     
     def product_headers(self, product_url: str) -> dict[str, str]:
