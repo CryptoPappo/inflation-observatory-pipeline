@@ -175,8 +175,7 @@ def test_coto_scrape():
         assert raw_scrape_ids == normalized_scrape_ids
     
 def test_coto_parser():
-    scrape_id = datetime.utcnow().strftime("%Y-%m-%d")
-    parser = CotoScraper(scrape_id)
+    parser = CotoScraper(scrape_id=None)
     product_disc = parser.parse(make_mock_product_json_discount())
     product_no_disc = parser.parse(make_mock_product_json_no_discount())
 

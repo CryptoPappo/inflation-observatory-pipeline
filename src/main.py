@@ -14,7 +14,7 @@ from src.loaders.load_raw_data import load_raw_responses, load_normalized_respon
 
 @task(
     retries=3,
-    retry_delay_seconds=60 * 15
+    retry_delay_seconds=60 * 5
 )
 def scrape(
         scraper_cls: BaseScraper,
@@ -22,7 +22,7 @@ def scrape(
 ):
     logger = get_run_logger()
 
-    logger.info(f"Starting scrape for {scraper.store}")
+    logger.info(f"Starting scrape for {scraper_cls.store}")
 
     scraper = scraper_cls(scrape_id=scrape_id)
     try:
@@ -53,7 +53,7 @@ def parse(
 ):
     logger = get_run_logger()
     
-    logger.info(f"Starting parsing for {scraper.store}")
+    logger.info(f"Starting parsing for {scraper_cls.store}")
 
     scraper = scraper_cls(scraper_id=None)
     normalized_responses = []
