@@ -13,9 +13,11 @@ from src.scrapers.base import BaseScraper
 logger = get_logger("carrefour_scraper")
 
 class CarrefourScraper(BaseScraper):
-    @property
-    def base_url(self) -> str:
-        return "https://www.carrefour.com.ar/sitemap.xml"
+    base_url = "https://www.carrefour.com.ar/sitemap.xml"
+    store = "carrefour"
+
+    def __init__(self, scrape_id: str | None):
+        self.scrape_id = scrape_id
     
     def product_headers(self, product_url: str) -> dict[str, str]:
         return {
@@ -31,8 +33,6 @@ class CarrefourScraper(BaseScraper):
         }
 
     def scrape(self) -> list[dict]:
-        scrape_id = datetime.utcnow().strftime("%Y-%m-%d_carrefour")
-
         session = LimiterSession(
             per_second=1,
             per_minute=60
@@ -52,8 +52,8 @@ class CarrefourScraper(BaseScraper):
         raw_responses.append(
                 {
                     "raw_id": uuid.uuid4().hex,
-                    "scrape_id": scrape_id,
-                    "store": "carrefour",
+                    "scrape_id": self.scrape_id,
+                    "store": self.store,
                     "url": self.base_url,
                     "response_type": "xml",
                     "response_category": "sitemap",
@@ -84,8 +84,8 @@ class CarrefourScraper(BaseScraper):
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,
-                            "scrape_id": scrape_id,
-                            "store": "carrefour",
+                            "scrape_id": self.scrape_id,
+                            "store": self.store,
                             "url": product_xml_url,
                             "response_type": "xml",
                             "response_category": "products",
@@ -120,8 +120,8 @@ class CarrefourScraper(BaseScraper):
                     raw_responses.append(
                             {
                                 "raw_id": uuid.uuid4().hex,
-                                "scrape_id": scrape_id,
-                                "store": "carrefour",
+                                "scrape_id": self.scrape_id,
+                                "store": self.store,
                                 "url": product_url,
                                 "response_type": "html",
                                 "response_category": "product",
@@ -148,8 +148,8 @@ class CarrefourScraper(BaseScraper):
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,
-                            "scrape_id": scrape_id,
-                            "store": "carrefour",
+                            "scrape_id": self.scrape_id,
+                            "store": self.store,
                             "url": url,
                             "response_type": "json",
                             "response_category": "product",
