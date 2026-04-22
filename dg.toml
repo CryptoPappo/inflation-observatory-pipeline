@@ -1,0 +1,5 @@
+directory_type = "project"
+
+[project]
+root_module = "dagster_project"
+code_location_target_module = "dagster_project.definitions"
