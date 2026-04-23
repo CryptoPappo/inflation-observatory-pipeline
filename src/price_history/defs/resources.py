@@ -4,13 +4,13 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-@dg.definitions
-def resources():
-    load_dotenv()
-    engine = create_engine(os.getenv("DATABASE_URL"))
+load_dotenv()
+engine = create_engine(os.getenv("DATABASE_URL"))
 
+@dg.definitions
+def resources():    
     return dg.Definitions(
             resources={
-                "postgres_sessionmaker": sessionmaker(bind=engine)
+                "postgres_session": sessionmaker(bind=engine)
             },
     )

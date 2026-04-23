@@ -1,4 +1,5 @@
 import dagster as dg
+from sqlalchemy.orm import sessionmaker
 
 from price_history.scrapers.base import BaseScraper
 from price_history.scrapers.coto_scraper import CotoScraper
@@ -9,12 +10,14 @@ def make_raw_asset(scraper_cls: BaseScraper) -> dg.Definitions:
     asset_key = f"scraper_{scraper_cls.store}"
 
     @dg.asset(name=asset_key)
-    def _raw(context):
+    def _raw(
+            context: dg.AssetExecutionContext,
+            postgres_session: dg.ResourceParam[sessionmaker]
+    ) -> list[dict]:
         scraper = scraper_cls(scrape_id=context.run.run_id)
         raw_responses = scraper.scrape()
 
-        Session = context.resources.postgres_sessionmaker
-        load_raw_responses(raw_responses, Session)
+        load_raw_responses(raw_responses, postgres_session)
         
         return raw_responses
 
@@ -31,7 +34,11 @@ def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
                 "raw_responses": dg.AssetIn(key=f"scraper_{scraper_cls.store}")
             }
     )
-    def _normalized(context, raw_responses):
+    def _normalized(
+            context: dg.AssetExecutionContext,
+            postgres_session: dg.ResourceParam[sessionmaker],
+            raw_responses: list[dict]
+    ):
         scraper = scraper_cls(scrape_id=context.run.run_id)
 
         normalized_responses = []
@@ -50,8 +57,7 @@ def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
                 #logger.exception(f"Failed parsing response: {raw_response}")
                 continue
 
-        Session = context.resources.postgres_sessionmaker
-        load_normalized_responses(normalized_responses, Session)
+        load_normalized_responses(normalized_responses, postgres_session)
 
     return dg.Definitions(
             assets=[_normalized]
