@@ -1,10 +1,11 @@
 import dagster as dg
 
+from price_history.scrapers.base import BaseScraper
 from price_history.scrapers.coto_scraper import CotoScraper
 from price_history.scrapers.carrefour_scraper import CarrefourScraper
 from price_history.loaders.load_raw_data import load_raw_responses, load_normalized_responses
 
-def make_raw_asset(scraper_cls):
+def make_raw_asset(scraper_cls: BaseScraper) -> dg.Definitions:
     asset_key = f"scraper_{scraper_cls.store}"
 
     @dg.asset(name=asset_key)
@@ -12,14 +13,16 @@ def make_raw_asset(scraper_cls):
         scraper = scraper_cls(scraper_id=context.run.run_id)
         raw_responses = scraper.scrape()
 
-        Session = context.postgres_sessionmaker
+        Session = context.resources.postgres_sessionmaker
         load_raw_responses(raw_responses, Session)
         
         return raw_responses
 
-    return _raw
+    return dg.Definitions(
+            assets=[_raw]
+    )
 
-def make_normalized_asset(scraper_cls):
+def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
     asset_key = f"parser_{scraper_cls.store}"
 
     @dg.asset(
@@ -47,18 +50,21 @@ def make_normalized_asset(scraper_cls):
                 #logger.exception(f"Failed parsing response: {raw_response}")
                 continue
 
-        Session = context.postgres_sessionmaker
+        Session = context.resources.postgres_sessionmaker
         load_normalized_responses(normalized_responses, Session)
 
-    return _normalized
+    return dg.Definitions(
+            assets=[_normalized]
+    )
 
+@dg.definitions
+def defs():
+    scrapers_cls = [
+            CotoScraper,
+            CarrefourScraper
+    ]
+    raw_assets = [make_raw_asset(scraper_cls) for scraper_cls in scrapers_cls]
+    normalized_assets = [make_normalized_asset(scraper_cls) for scraper_cls in scrapers_cls]
+    total_assets = raw_assets + normalized_assets
 
-scrapers_cls = [
-        CotoScraper,
-        CarrefourScraper
-]
-raw = []
-normalized = []
-for scraper_cls in scrapers_cls:
-    raw.append(make_raw_asset(scraper_cls))
-    normalized.append(make_normalized_asset(scraper_cls))
+    return dg.Definitions.merge(*total_assets)   
