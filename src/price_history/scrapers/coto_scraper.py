@@ -6,9 +6,9 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from requests_ratelimiter import LimiterSession
 
-from src.utils.logging import get_logger
-from src.utils.tools import safe_get
-from src.scrapers.base import BaseScraper
+from price_history.utils.logging import get_logger
+from price_history.utils.tools import safe_get
+from price_history.scrapers.base import BaseScraper
 logger = get_logger("coto_scraper")
 
 class CotoScraper(BaseScraper):

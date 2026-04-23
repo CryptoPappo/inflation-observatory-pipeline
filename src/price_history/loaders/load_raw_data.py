@@ -1,8 +1,8 @@
 from sqlalchemy.dialects.postgresql import insert 
 from sqlalchemy.orm.session import sessionmaker
 
-from src.utils.logging import get_logger
-from src.models.raw_tables import RawResponses, NormalizedResponses
+from price_history.utils.logging import get_logger
+from price_history.models.raw_tables import RawResponses, NormalizedResponses
 logger = get_logger("load_raw_data")
 
 def load_raw_responses(

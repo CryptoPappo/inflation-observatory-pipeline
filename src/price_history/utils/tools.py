@@ -7,7 +7,7 @@ from tenacity import (
         stop_after_attempt
 )
 
-from src.utils.logging import get_logger
+from price_history.utils.logging import get_logger
 logger = get_logger("tools")
 
 def log_after_retry(retry_state):

@@ -1,17 +1,12 @@
-import os
-import sys
+import uuid
 import responses
 import requests
 from sqlalchemy import create_engine, select, inspect
 from sqlalchemy.orm import sessionmaker
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
-sys.path.append(parent_dir)
-
-from src.scrapers.carrefour_scraper import CarrefourScraper
-from src.models.raw_tables import Base, RawResponses, NormalizedResponses
-from src.loaders.load_raw_data import load_raw_responses, load_normalized_responses
+from price_history.scrapers.carrefour_scraper import CarrefourScraper
+from price_history.models.raw_tables import Base, RawResponses, NormalizedResponses
+from price_history.loaders.load_raw_data import load_raw_responses, load_normalized_responses
 
 def make_mock_product_json_discount():
     return """
@@ -37,7 +32,8 @@ def make_mock_product_json_no_discount():
     """
 @responses.activate
 def test_carrefour_scrape():
-    scraper = CarrefourScraper()
+    scrape_id = uuid.uuid4().hex
+    scraper = CarrefourScraper(scrape_id=scrape_id)
    
     mock_sitemap_data = """<?xml version="1.0" encoding="UTF-8"?>
     <urlset>
@@ -187,7 +183,7 @@ def test_carrefour_scrape():
         assert raw_scrape_ids == normalized_scrape_ids
 
 def test_carrefour_parser():
-    parser = CarrefourScraper()
+    parser = CarrefourScraper(scrape_id=None)
     product_disc = parser.parse(make_mock_product_json_discount())
     product_no_disc = parser.parse(make_mock_product_json_no_discount())
 
