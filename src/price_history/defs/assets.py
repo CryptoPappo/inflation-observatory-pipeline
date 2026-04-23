@@ -10,7 +10,7 @@ def make_raw_asset(scraper_cls: BaseScraper) -> dg.Definitions:
 
     @dg.asset(name=asset_key)
     def _raw(context):
-        scraper = scraper_cls(scraper_id=context.run.run_id)
+        scraper = scraper_cls(scrape_id=context.run.run_id)
         raw_responses = scraper.scrape()
 
         Session = context.resources.postgres_sessionmaker
@@ -32,7 +32,7 @@ def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
             }
     )
     def _normalized(context, raw_responses):
-        scraper = scraper_cls(scraper_id=context.run.run_id)
+        scraper = scraper_cls(scrape_id=context.run.run_id)
 
         normalized_responses = []
         for raw_response in raw_responses:
