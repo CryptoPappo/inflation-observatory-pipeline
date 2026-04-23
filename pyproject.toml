@@ -8,3 +8,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.dg]
+directory_type = "project"
+
+[tool.dg.project]
+root_module = "price_history"
+code_location_target_module = "price_history.definitions"
