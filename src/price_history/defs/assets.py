@@ -65,7 +65,24 @@ def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
             assets=[_normalized]
     )
 
-@dbt_assets(manifest=dbt_project.manifest_path, select="tag:daily")
+def make_warehouse_ready(scrapers_cls: list[BaseScraper]) -> dg.Definitions:
+    deps = [f"parser_{scraper_cls.store}" for scraper_cls in scrapers_cls]
+
+    @dg.asset(
+            name="warehouse_ready",
+            deps=deps
+    )
+    def _warehouse():
+        pass
+
+    return dg.Definitions(
+            assets=[_warehouse]
+    )
+
+@dbt_assets(
+        manifest=dbt_project.manifest_path,
+        select="tag:daily"
+)
 def dbt_models(context: dg.AssetExecutionContext, dbt: DbtCliResource):
     yield from dbt.cli(["build"], context=context).stream()
 
@@ -78,6 +95,9 @@ def defs():
     ]
     raw_assets = [make_raw_asset(scraper_cls) for scraper_cls in scrapers_cls]
     normalized_assets = [make_normalized_asset(scraper_cls) for scraper_cls in scrapers_cls]
-    total_assets = raw_assets + normalized_assets 
+    warehouse_assets = [make_warehouse_ready(scrapers_cls)]
+    dbt_assets = [dg.Definitions(assets=[dbt_models])]
+
+    total_assets = raw_assets + normalized_assets + warehouse_assets + dbt_assets
 
     return dg.Definitions.merge(*total_assets)   
