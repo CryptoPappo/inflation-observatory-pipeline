@@ -1,6 +1,6 @@
 import dagster as dg
 from sqlalchemy.orm import sessionmaker
-from dagster_dbt import DbtCliResource, dbt_assets
+from dagster_dbt import DbtCliResource, dbt_assets, build_dbt_asset_selection
 
 from price_history.scrapers.base import BaseScraper
 from price_history.scrapers.coto_scraper import CotoScraper
@@ -65,6 +65,11 @@ def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
             assets=[_normalized]
     )
 
+@dbt_assets(manifest=dbt_project.manifest_path, select="tag:daily")
+def dbt_models(context: dg.AssetExecutionContext, dbt: DbtCliResource):
+    yield from dbt.cli(["build"], context=context).stream()
+
+
 @dg.definitions
 def defs():
     scrapers_cls = [
@@ -73,10 +78,6 @@ def defs():
     ]
     raw_assets = [make_raw_asset(scraper_cls) for scraper_cls in scrapers_cls]
     normalized_assets = [make_normalized_asset(scraper_cls) for scraper_cls in scrapers_cls]
-    total_assets = raw_assets + normalized_assets
+    total_assets = raw_assets + normalized_assets 
 
     return dg.Definitions.merge(*total_assets)   
-
-@dbt_assets(manifest=dbt_project.manifest_path)
-def dbt_models(context: dg.AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["build"], context=context).stream()
