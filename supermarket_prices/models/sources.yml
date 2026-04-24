@@ -1,6 +1,9 @@
 version: 1
 
 sources:
+  - name: dagster
+    tables:
+      - name: warehouse_ready
   - name: public
     database: inflation_db
     tables:

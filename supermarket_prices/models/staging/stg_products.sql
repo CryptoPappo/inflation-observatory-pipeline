@@ -1,3 +1,5 @@
+-- depends_on: {{ source('dagster','warehouse_ready') }}
+
 with 
 
 source as (
