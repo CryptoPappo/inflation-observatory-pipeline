@@ -100,7 +100,7 @@ class CotoScraper(BaseScraper):
                 soup = BeautifulSoup(response.text, "xml")
                 products_urls.extend([product.text for product in soup.find_all("loc")])
 
-        for product_url in products_urls[:10]:
+        for product_url in products_urls:
             headers = self.product_headers(product_url)
             product_url += "?format=json"
             try:

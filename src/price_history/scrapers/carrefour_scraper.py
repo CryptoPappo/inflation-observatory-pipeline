@@ -97,7 +97,7 @@ class CarrefourScraper(BaseScraper):
                 products_urls.extend([product.text for product in soup.find_all("loc")])
         
         products_ids = []
-        for product_url in products_urls[:10].copy():
+        for product_url in products_urls:
             try:
                 response = safe_get(
                         session,
@@ -131,7 +131,7 @@ class CarrefourScraper(BaseScraper):
                     )
             
         api_url = "https://www.carrefour.com.ar/api/catalog_system/pub/products/search?fq=productId:"
-        for product_id, product_url in zip(products_ids, products_urls[:len(products_ids)]):
+        for product_id, product_url in zip(products_ids, products_urls):
             headers = self.product_headers(product_url)
             url = api_url + product_id
             try:
