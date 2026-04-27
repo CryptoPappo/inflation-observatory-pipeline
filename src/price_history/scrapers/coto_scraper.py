@@ -146,7 +146,9 @@ class CotoScraper(BaseScraper):
 
         raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])
         regular_price = raw_prices["precioLista"]
-        
+        if regular_price == 0.0:
+            raise RuntimeError("Regular price can't be zero")
+
         try:
             raw_discounts = ast.literal_eval(raw_attributes["product.dtoDescuentos"][0])[0]
         except IndexError:

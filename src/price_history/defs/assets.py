@@ -60,7 +60,6 @@ def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
                 )
             except Exception as e:
                 context.log.exception(f"Failed parsing response: {raw_response}")
-                continue
         context.log.info(f"Parsed {len(normalized_responses)} products from {scraper.store}")
 
         rows_count = load_normalized_responses(normalized_responses, postgres_session)

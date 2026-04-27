@@ -164,6 +164,9 @@ class CarrefourScraper(BaseScraper):
         raw_json = json.loads(raw_data)[0]
         
         raw_prices = raw_json["items"][0]["sellers"][0]["commertialOffer"]
+        regular_price = raw_prices["ListPrice"]
+        if regular_price == 0.0:
+            raise RuntimeError("Regular price can't be zero")
         
         raw_discount = raw_prices.get("PromotionTeasers", [])
         if len(raw_discount) == 0:
@@ -189,7 +192,7 @@ class CarrefourScraper(BaseScraper):
                 "subcategory": subcategory,
                 "brand": raw_json.get("brand", ""),
                 "unit": raw_json.get("Gramaje leyenda de conversión", [""])[0],
-                "regular_price": raw_prices["ListPrice"],
+                "regular_price": regular_price, 
                 "discount_price": raw_prices.get("Price", raw_prices["ListPrice"]),
                 "unit_price": raw_json.get("pricePerUnit", "0"),
                 "untaxed_price": 0,
