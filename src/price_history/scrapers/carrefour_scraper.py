@@ -48,7 +48,7 @@ class CarrefourScraper(BaseScraper):
         except Exception as e:
             logger.exception("An error ocurred with carrefour sitemap call")
             raise
-        logger.info("Finished downloading carrefour sitemap xml")
+        logger.debug("Finished downloading carrefour sitemap xml")
         raw_responses.append(
                 {
                     "raw_id": uuid.uuid4().hex,
@@ -80,7 +80,7 @@ class CarrefourScraper(BaseScraper):
             except Exception as e:
                 logger.exception(f"An error ocurred with carrefour products.xml call: {product_xml_url}")
             else:
-                logger.info("Finished downloading carrefour products xml")
+                logger.debug("Finished downloading carrefour products xml")
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,
@@ -108,7 +108,7 @@ class CarrefourScraper(BaseScraper):
                 logger.exception(f"An error ocurred with carrefour product call: {product_url}")
                 products_urls.remove(product_url)
             else:
-                logger.info(f"Downloaded carrefour source code of product: {product_url}")
+                logger.debug(f"Downloaded carrefour source code of product: {product_url}")
                 source_code = response.text
                 match_ = re.search(r"\"productId\":\"[0-9]+\"", source_code)
                 if match_ is None:
@@ -144,7 +144,7 @@ class CarrefourScraper(BaseScraper):
             except Exception as e:
                 logger.exception(f"An error ocurred with carrefour product call: {product_url}")
             else:
-                logger.info(f"Downloaded carrefour product json: {url}")
+                logger.debug(f"Downloaded carrefour product json: {url}")
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,

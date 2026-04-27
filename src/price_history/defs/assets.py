@@ -17,10 +17,13 @@ def make_raw_asset(scraper_cls: BaseScraper) -> dg.Definitions:
             postgres_session: dg.ResourceParam[sessionmaker]
     ) -> list[dict]:
         scraper = scraper_cls(scrape_id=context.run.run_id)
-        raw_responses = scraper.scrape()
-
-        load_raw_responses(raw_responses, postgres_session)
         
+        raw_responses = scraper.scrape()
+        context.log.info(f"Scraped {len(raw_responses)} products from {scraper.store}")
+
+        rows_count = load_raw_responses(raw_responses, postgres_session)
+        context.log.info(f"Raw responses insert for {scraper.store}: attempted={len(raw_responses)} inserted={rows_count}")
+
         return raw_responses
 
     return dg.Definitions(
@@ -56,10 +59,12 @@ def make_normalized_asset(scraper_cls: BaseScraper) -> dg.Definitions:
                         }
                 )
             except Exception as e:
-                #logger.exception(f"Failed parsing response: {raw_response}")
+                context.log.exception(f"Failed parsing response: {raw_response}")
                 continue
+        context.log.info(f"Parsed {len(normalized_responses)} products from {scraper.store}")
 
-        load_normalized_responses(normalized_responses, postgres_session)
+        rows_count = load_normalized_responses(normalized_responses, postgres_session)
+        context.log.info(f"Normalized responses insert for {scraper.store}: attempted={len(normalized_responses)} inserted={rows_count}")
 
     return dg.Definitions(
             assets=[_normalized]

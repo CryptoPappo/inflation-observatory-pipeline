@@ -52,7 +52,7 @@ class CotoScraper(BaseScraper):
         except Exception as e:
             logger.exception("An error ocurred with coto sitemap call")
             raise
-        logger.info("Finished downloading coto sitemap xml")
+        logger.debug("Finished downloading coto sitemap xml")
         raw_responses.append(
                 {
                     "raw_id": uuid.uuid4().hex,
@@ -84,7 +84,7 @@ class CotoScraper(BaseScraper):
             except Exception as e:
                 logger.exception(f"An error ocurred with coto products.xml call: {product_xml_url}")
             else:
-                logger.info("Finished downloading coto products xml")
+                logger.debug("Finished downloading coto products xml")
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,
@@ -113,7 +113,7 @@ class CotoScraper(BaseScraper):
             except Exception as e:
                 logger.exception(f"An error ocurred with coto product call: {product_url}")
             else:
-                logger.info(f"Donwloaded coto product: {product_url}")
+                logger.debug(f"Donwloaded coto product: {product_url}")
                 raw_responses.append(
                         {
                             "raw_id": uuid.uuid4().hex,
@@ -126,7 +126,7 @@ class CotoScraper(BaseScraper):
                             "time": datetime.utcnow()
                         }
                 )
-
+        
         return raw_responses 
         
     def parse(self, raw_data: str) -> dict:
