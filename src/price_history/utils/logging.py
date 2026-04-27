@@ -36,7 +36,7 @@ def get_logger(name: str) -> Logger:
     os.makedirs(os.path.dirname(log_path), exist_ok=True)
 
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     if logger.hasHandlers():
         return logger
