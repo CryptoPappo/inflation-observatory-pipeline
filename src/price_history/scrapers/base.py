@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterator, Sequence
+from sqlalchemy.engine import Row
 
 class BaseScraper(ABC):
 
@@ -17,9 +19,9 @@ class BaseScraper(ABC):
         """Headers to get products raw json"""
 
     @abstractmethod
-    def scrape(self) -> list[dict]:
+    def scrape(self) -> Iterator[dict]:
         """Render pages and returns raw HTML / responses"""
 
     @abstractmethod
-    def parse(self, raw_data: str) -> dict:
+    def parse(self, raw_iterator: Sequence[Row]) -> Iterator[dict]:
         """Normalize raw jsons"""

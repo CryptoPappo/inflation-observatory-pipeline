@@ -2,9 +2,11 @@ import uuid
 import tenacity
 import json
 import ast
+from collections.abc import Iterator, Sequence
 from datetime import datetime
 from bs4 import BeautifulSoup
 from requests_ratelimiter import LimiterSession
+from sqlalchemy.engine import Row
 
 from price_history.utils.logging import get_logger
 from price_history.utils.tools import safe_get
@@ -34,7 +36,7 @@ class CotoScraper(BaseScraper):
                 "Sec-GPC": "1"
         }
 
-    def scrape(self) -> list[dict]:
+    def scrape(self) -> Iterator[dict]:
         scrape_id = datetime.utcnow().strftime("%Y-%m-%d_coto")
 
         session = LimiterSession(
@@ -42,7 +44,6 @@ class CotoScraper(BaseScraper):
             per_minute=60
         )
 
-        raw_responses = []
         try:
             response = safe_get(
                     session,
@@ -53,18 +54,16 @@ class CotoScraper(BaseScraper):
             logger.exception("An error ocurred with coto sitemap call")
             raise
         logger.debug("Finished downloading coto sitemap xml")
-        raw_responses.append(
-                {
-                    "raw_id": uuid.uuid4().hex,
-                    "scrape_id": self.scrape_id,
-                    "store": self.store,
-                    "url": self.base_url,
-                    "response_type": "xml",
-                    "response_category": "sitemap",
-                    "payload": response.text,
-                    "time": datetime.utcnow()
-                }
-        )
+        yield {
+                "raw_id": uuid.uuid4().hex,
+                "scrape_id": self.scrape_id,
+                "store": self.store,
+                "url": self.base_url,
+                "response_type": "xml",
+                "response_category": "sitemap",
+                "payload": response.text,
+                "time": datetime.utcnow()
+        }
 
         soup = BeautifulSoup(response.text, "xml")
         urls = soup.find_all("loc")
@@ -84,21 +83,19 @@ class CotoScraper(BaseScraper):
             except Exception as e:
                 logger.exception(f"An error ocurred with coto products.xml call: {product_xml_url}")
             else:
-                logger.debug("Finished downloading coto products xml")
-                raw_responses.append(
-                        {
-                            "raw_id": uuid.uuid4().hex,
-                            "scrape_id": self.scrape_id,
-                            "store": self.store,
-                            "url": product_xml_url,
-                            "response_type": "xml",
-                            "response_category": "products",
-                            "payload": response.text,
-                            "time": datetime.utcnow()
-                        }
-                )
+                yield {
+                        "raw_id": uuid.uuid4().hex,
+                        "scrape_id": self.scrape_id,
+                        "store": self.store,
+                        "url": product_xml_url,
+                        "response_type": "xml",
+                        "response_category": "products",
+                        "payload": response.text,
+                        "time": datetime.utcnow()
+                }
                 soup = BeautifulSoup(response.text, "xml")
                 products_urls.extend([product.text for product in soup.find_all("loc")])
+        logger.debug(f"Found {len(products_urls)} products urls for store coto")
 
         for product_url in products_urls:
             headers = self.product_headers(product_url)
@@ -114,57 +111,57 @@ class CotoScraper(BaseScraper):
                 logger.exception(f"An error ocurred with coto product call: {product_url}")
             else:
                 logger.debug(f"Donwloaded coto product: {product_url}")
-                raw_responses.append(
-                        {
-                            "raw_id": uuid.uuid4().hex,
-                            "scrape_id": self.scrape_id,
-                            "store": self.store,
-                            "url": product_url,
-                            "response_type": "json",
-                            "response_category": "product",
-                            "payload": response.text,
-                            "time": datetime.utcnow()
-                        }
-                )
-        
-        return raw_responses 
-        
-    def parse(self, raw_data: str) -> dict:
-        raw_json = json.loads(raw_data)
-        
-        raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
+                yield {
+                        "raw_id": uuid.uuid4().hex,
+                        "scrape_id": self.scrape_id,
+                        "store": self.store,
+                        "url": product_url,
+                        "response_type": "json",
+                        "response_category": "product",
+                        "payload": response.text,
+                        "time": datetime.utcnow()
+                }
+       
+    def parse(self, raw_iterator: Sequence[Row]) -> Iterator[dict]:
+        for raw_data in raw_iterator:
+            raw_json = json.loads(raw_data.payload)
+            
+            raw_attributes = raw_json["contents"][0]["Main"][0]["record"]["attributes"]
 
-        raw_categories = raw_json["contents"][0]["Main"][0]["breadcrumbsConstructor"]
-        try:
-            category = raw_categories[1]["label"]
-        except Exception as e:
-            category = ""
-        try:
-            subcategory = raw_categories[-1]["label"]
-        except Exception as e:
-            subcategory = ""
+            raw_categories = raw_json["contents"][0]["Main"][0]["breadcrumbsConstructor"]
+            try:
+                category = raw_categories[1]["label"]
+            except Exception as e:
+                category = ""
+            try:
+                subcategory = raw_categories[-1]["label"]
+            except Exception as e:
+                subcategory = ""
 
-        raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])
-        regular_price = raw_prices["precioLista"]
-        if regular_price == 0.0:
-            raise RuntimeError("Regular price can't be zero")
+            raw_prices = ast.literal_eval(raw_attributes["sku.dtoPrice"][0])
+            regular_price = raw_prices["precioLista"]
+            if regular_price == 0.0:
+                continue
 
-        try:
-            raw_discounts = ast.literal_eval(raw_attributes["product.dtoDescuentos"][0])[0]
-        except IndexError:
-            raw_discounts = {"precioDescuento": f"{regular_price}", "textoDescuento": ""}
-        
-        return {
-                "name": raw_attributes["product.displayName"][0],
-                "sku": raw_attributes.get("sku.repositoryId", ["0"])[0],
-                "ean": raw_attributes["product.eanPrincipal"][0],
-                "category": category,
-                "subcategory": subcategory,
-                "brand": raw_attributes.get("product.brand", [""])[0],
-                "unit": raw_attributes.get("sku.unit_of_measure", [""])[0],
-                "regular_price": regular_price,
-                "discount_price": raw_discounts.get("precioDescuento", f"{regular_price}"),
-                "unit_price": raw_prices.get("precio", 0),
-                "untaxed_price": raw_prices.get("precioSinImp", 0),
-                "discount": raw_discounts.get("textoDescuento", "")
-        }
+            try:
+                raw_discounts = ast.literal_eval(raw_attributes["product.dtoDescuentos"][0])[0]
+            except IndexError:
+                raw_discounts = {"precioDescuento": f"{regular_price}", "textoDescuento": ""}
+            
+            yield {
+                    "raw_id": self.scrape_id,
+                    "normalized_payload": {
+                        "name": raw_attributes["product.displayName"][0],
+                        "sku": raw_attributes.get("sku.repositoryId", ["0"])[0],
+                        "ean": raw_attributes["product.eanPrincipal"][0],
+                        "category": category,
+                        "subcategory": subcategory,
+                        "brand": raw_attributes.get("product.brand", [""])[0],
+                        "unit": raw_attributes.get("sku.unit_of_measure", [""])[0],
+                        "regular_price": regular_price,
+                        "discount_price": raw_discounts.get("precioDescuento", f"{regular_price}"),
+                        "unit_price": raw_prices.get("precio", 0),
+                        "untaxed_price": raw_prices.get("precioSinImp", 0),
+                        "discount": raw_discounts.get("textoDescuento", "")
+                    }
+            }

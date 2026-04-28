@@ -136,8 +136,9 @@ def test_coto_scrape():
 
     Session = sessionmaker(bind=engine)
     
-    raw_responses = scraper.scrape()
-    load_raw_responses(raw_responses, Session)
+    raw_iterator = scraper.scrape()
+    raw_responses = list(raw_iterator)
+    raw_rows_count = load_raw_responses(iter(raw_responses), Session)
     
     normalized_responses = []
     for raw_response in raw_responses:
@@ -150,13 +151,15 @@ def test_coto_scrape():
                         "normalized_payload": scraper.parse(raw_response["payload"])
                     }
             )
-    load_normalized_responses(normalized_responses, Session)
+    normalized_rows_count = load_normalized_responses(normalized_responses, Session)
 
     with Session() as session:
         rows_raw = session.execute(select(RawResponses)).all()
         rows_normalized = session.execute(select(NormalizedResponses)).all()
         assert len(rows_raw) == 4
+        assert len(rows_raw) == raw_rows_count
         assert len(rows_normalized) == 2
+        assert len(rows_normalized) == normalized_rows_count
        
         rows_raw_json = session.execute(
                 select(RawResponses)
